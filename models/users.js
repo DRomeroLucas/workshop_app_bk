@@ -5,13 +5,9 @@ const UserSchema = Schema({
     role: {
         type: String,
         require: true,
-        default: "Cliente", //Valor por defecto
+        default: "Client", //Valor por defecto
     },
     name: {
-        type: String,
-        require: true,
-    },
-    last_name: {
         type: String,
         require: true,
     },

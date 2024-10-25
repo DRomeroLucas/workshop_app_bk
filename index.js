@@ -3,7 +3,7 @@ import express from "express";
 import connection from "./database/connection.js"
 import cors from "cors";
 import bodyParser from "body-parser";
-// import UserRoutes from "./routes/users.js"
+import userRoutes from "./routes/users.js"
 // import PublicationRoutes from "./routes/publications.js"
 // import FollowRoutes from "./routes/follows.js"
 
@@ -31,9 +31,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas del aplicativo
+app.use('/api/user', userRoutes);
 
 // Setting server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log("Servidor en ejecución", port);
 });
 
