@@ -3,6 +3,8 @@ import express from "express";
 import connection from "./database/connection.js"
 import cors from "cors";
 import bodyParser from "body-parser";
+import serviceRoutes from './routes/services.js';
+import appointmentRoutes from './routes/appointments.js';
 // import UserRoutes from "./routes/users.js"
 // import PublicationRoutes from "./routes/publications.js"
 // import FollowRoutes from "./routes/follows.js"
@@ -31,6 +33,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas del aplicativo
+app.use('/api/service', serviceRoutes);
+app.use('/api/appointment', appointmentRoutes);
 
 // Setting server
 app.listen(port, () => {
