@@ -22,9 +22,20 @@ export const ensureAuth = (req, res, next) => {
 
         // Verify token validity
         if(payload.exp <= moment.unix()){
-            
+            return res.status(401).send({
+                status: "error",
+                message: "El token ha expirado"
+            });
         }
-    } catch (error) {
+
+        // Add user info to request and continue
+        req.user= payload;
+        next();
         
+    } catch (error) {
+        return res.status(401).send({
+            status: "error",
+            message: "Token inválido"
+        })
     }
 }
