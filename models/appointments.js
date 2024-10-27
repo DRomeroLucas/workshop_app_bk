@@ -1,20 +1,21 @@
+import mongoose from "mongoose";
 import { model, Schema } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
 
-const appointmentSchema = new Schema({
+const appointmentSchema = new mongoose.Schema({
     idMechanic: {
-        type: mongoose.Schema.types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Mechanic',
         required: true,
     },
     idClient: {
-        type: mongoose.Schema.types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
     idService: {
-        type: mongoose.Schema.types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Service',
         required: true,
     },
