@@ -55,9 +55,83 @@ export const register = async (req, res) => {
         });
 
     } catch (error) {
+        console.log(error);
         return res.status(500).json({
             status: 'error',
-            message: 'Error al guardar el usuario en la base de datos'
+            message: 'Error al guardar el usuario en la base de datos',
+            error: {
+                name: error.name,
+                message: error.message
+            }
         });
     }
 }
+
+// Metodo para realizar login
+export const login = async (req, res) => {
+    try {
+        // Almacenar datos recibidos
+        const params = req.body;
+
+        // Validar que lo datos requeridos hallan llegado
+        if (!params.email || !params.password) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Error, complete el formulario porfavor'
+            });
+        }
+
+        // Validar si el correo coincide con un usuarios 
+        // * Tener en cuenta que no se valida password porque esta se debe validar con un metodo especial de bcrypt
+        // ? findOne: Este metodo, si encuentra un usuario con el parametro que le pasemos nos retorna el objeto completo 
+        const user = await User.findOne({ email: params.email });
+
+        if (!user) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Credenciales incorrectas'
+            });
+        }
+
+        // Validar contrasena
+        // * El metodo compare compara las dos password y retorna un boleano (True - False) segun si estas coinciden o no 
+        const passwordUser = await bcrypt.compare(params.password, user.password,);
+
+        if (!passwordUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Credenciales incorrectas'
+            });
+        }
+
+        // Generar token de autenticacion (JWT)
+        // * Aca se importa el metodo createToken() para generarlo
+        // * Se debe pasar el usuario, en este caso el que tiene todos lo datos 
+        const token = createToken(user);
+
+        // Respuesta exitosa
+        // * Enviar tambien el token para verificar que si se este creando
+        return res.status(200).json({
+            status: "success",
+            message: "Autenticación exitosa",
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                last_name: user.last_name,
+                email: user.email,
+            }
+        });
+
+    } catch (error) {
+        console.error("Error en el proceso de inicio de sesión:", error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Error al iniciar sesión',
+            error: {
+                name: error.name,
+                message: error.message
+            }
+        });
+    }
+}   
