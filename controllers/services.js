@@ -1,6 +1,5 @@
 import Service from '../models/services.js';
 
-
 // Test controller services
 export const testService = (req, res) => {
     return res.status(200).send({
