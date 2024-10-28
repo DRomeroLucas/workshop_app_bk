@@ -59,6 +59,20 @@ export const createAppointment = async (req, res) => {
     }
 }
 
+// List appointments
+export const listAppointments = async (req, res) => {
+    try {
+        const appointments = await Appointment.find({}, 'idMechanic idService date time price');
+        res.status(200).json(appointments);
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: "Error al obtener las citas",
+            error
+        });
+    }
+};
+
 // Get service by Id
 export const getAppointment = async (req, res) => {
     try {
