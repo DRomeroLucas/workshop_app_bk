@@ -61,9 +61,95 @@ export const listServices = async (req, res) => {
         res.status(200).json(services);
     } catch (error) {
         res.status(500).json({
-            status: "error",
+            status: "error" ,
             message: 'Error al obtener los servicios',
-          error
+            error
         });
     }
 };
+
+// Get services by ID
+export const getService = async (req, res) => {
+    try {
+        const services = await Service.findById(req.params.id);
+        res.status(200).json(services);   
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al obtener el servicio", error
+        });
+    }
+};
+
+// Update service
+export const updateService = async (req, res) => {
+    try {
+        const { service_name, description, price} = req.body;
+        const updateService = await Service.findByIdAndUpdate(
+            req.params.id,
+            { service_name, description, price },
+            { new: true }
+        );
+
+        res.status(200).json({
+            message: 'Servicio actualizado',    
+            updateService
+        });
+    } catch (error) {
+        res.status(500).json(
+            {
+                message: 'Error al actualizar el servicio',
+                error
+            }
+        );
+    }
+};
+
+// Logical erase
+export const deleteService = async (req, res) => {
+    try {
+        const deletedService = await Service.findByIdAndUpdate(
+            req.params.id,
+            { isDeleted: true },
+            { new: true }
+        );
+        if (!deletedService) {
+            return res.status(404).json({ message: 'Servicio no encontrado'});
+        }
+        res.status(200).json({ message: 'Servicio eliminado' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al eliminar el servicio', error});
+    }
+}
+
+// Reactivate a service
+export const activateService = async (req, res) => {
+    try {
+        const deletedService = await Service.findByIdAndUpdate(
+            req.params.id,
+            { isDeleted: false },
+            { new: true }
+        );
+        if (!deletedService) {
+            return res.status(404).json({ message: 'Servicio no encontrado'});
+        }
+        res.status(200).json({ message: 'Servicio reactivado' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al reactivar el servicio', error});
+    }
+}
+
+// Eliminate service to the DB
+export const hardDeleteService = async (req, res) => {
+    try {
+        const deletedService = await Service.findByIdAndDelete(req.params.id);
+        if (!deletedService) {
+            return res.status(404).json({ message: 'Servicio no encontrado'});
+        }
+        res.status(200).json({ message: 'Servicio eliminado de forma permanenete'});
+    } catch (error) {
+        res.status(500).json({ 
+            messahge: 'Error al eliminar el servicio',
+        error
+    });
+    }
+}
