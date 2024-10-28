@@ -134,4 +134,50 @@ export const login = async (req, res) => {
             }
         });
     }
-}   
+}
+
+// Metodo par mostrara el perfil de un usuario
+export const profile = async (req, res) => {
+    try {
+        // Obtener Id del usuario desde los parametros pasados en la url
+        const userId = req.params.id;
+
+        // 1. Validar que si halla autenticacion con el req.user -> sale del middleware Auth
+        // * El middleware crea un payload que tiene informacion del usuario atenticado, con este payload creamos la variable 'user' con la cual verificamos si llegue 
+        // 2. Validar si el id del usuario autenticado coincide con el del req.user
+        if (!req.user || !req.user.userId) {
+            return res.status(401).send({
+                status: "Error",
+                message: "Usuario no autenticado"
+            });
+        }
+        // Buscar el usuario en la BD, excluir datos que no queremos mostrar con el metodo select
+        const userProfile = await User.findById(userId).select('-_id -password -role -__v -isDeleted');
+
+        // Verificar si el usuario buscado no existe
+        if (!userProfile) {
+            return res.status(404).send({
+                status: "error",
+                message: "Usuario no encontrado"
+            });
+        }
+
+        // Devolver datos del usuario
+        return res.status(200).json({
+            status: 'success',
+            user: userProfile
+        });
+
+    } catch (error) {
+        console.log("Error al obtener el perfil de usuario: ", error);
+        // Devolver mensaje de error
+        return res.status(500).send({
+            status: "error",
+            message: "Error al obtener el perfil de usuario",
+            error: {
+                name: error.name,
+                message: error.message
+            }
+        });
+    }
+};  
