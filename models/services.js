@@ -4,6 +4,7 @@ const ServiceSchema = new Schema({
     service_name: {
         type: String,
         required: true,
+        unique: true
     },
     description: {
         type: String,
@@ -17,6 +18,6 @@ const ServiceSchema = new Schema({
         type: Boolean,
         default: false
     }
-}, { timestamps: true});
+}, { timestamps: true });
 
 export default model('Service', ServiceSchema, 'services');

@@ -1,12 +1,10 @@
-// Improts (set from package.json)
+// Imports (set from package.json)
 import express from "express";
 import connection from "./database/connection.js"
 import cors from "cors";
 import bodyParser from "body-parser";
-import serviceRoutes from "./routes/services.js";
-// import UserRoutes from "./routes/users.js"
-// import PublicationRoutes from "./routes/publications.js"
-// import FollowRoutes from "./routes/follows.js"
+import ServicesRoutes from "./routes/services.js";
+
 
 
 //  TEST CONNECTION API
@@ -17,7 +15,7 @@ connection();
 
 //  Create Node Server
 const app = express();
-const port = process.env.PORT || 4200;
+const port = process.env.PORT || 4500;
 
 // CORS
 app.use(cors({
