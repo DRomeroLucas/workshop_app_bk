@@ -31,6 +31,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas del aplicativo
+app.use('/api/service', serviceRoutes);
 
 // Setting server
 app.listen(port, () => {
