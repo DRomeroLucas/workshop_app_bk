@@ -14,7 +14,6 @@ export const createService = async (req, res) => {
         let params = req.body;
 
         // Validate input data
-
         if (!params.service_name || !params.description || !params.price) {
             return res.status(400).json({
                 status: "error",
