@@ -14,10 +14,11 @@ export const createService = async (req, res) => {
         let params = req.body;
 
         // Validate input data
+
         if (!params.service_name || !params.description || !params.price) {
             return res.status(400).json({
                 status: "error",
-                message: "Faltan datos para enviar, por favor, verifique"
+                message: "Faltan datos para enviar, por favor verifique"
             });
         }
 
@@ -61,7 +62,9 @@ export const listServices = async (req, res) => {
         res.status(200).json(services);
     } catch (error) {
         res.status(500).json({
-            message: 'Error al obtener los servicios', error
+            status: "error",
+            message: 'Error al obtener los servicios',
+          error
         });
     }
 };
