@@ -3,9 +3,8 @@ import express from "express";
 import connection from "./database/connection.js"
 import cors from "cors";
 import bodyParser from "body-parser";
+import userRoutes from "./routes/users.js"
 import ServicesRoutes from "./routes/services.js";
-
-
 
 //  TEST CONNECTION API
 console.log("API en ejecución!");
@@ -30,10 +29,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas del aplicativo
-app.use('/api/service', serviceRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/service', ServicesRoutes);
 
 // Setting server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log("Servidor en ejecución", port);
 });
 
