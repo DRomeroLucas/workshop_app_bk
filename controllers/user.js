@@ -15,6 +15,20 @@ export const register = async (req, res) => {
             });
         }
 
+        // Validar que el correo sea valido
+        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailValido.test(dataUser.email)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Por favor, ingresa un email válido'
+            });
+        }
+
+        // Agregar Lower Case a los correos
+        dataUser.email = dataUser.email.toLowerCase();
+
+
         // *  Creacion de un objeto User
         const newUser = new User(dataUser);
 

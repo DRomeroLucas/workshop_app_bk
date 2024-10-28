@@ -23,9 +23,7 @@ const UserSchema = Schema({
     email: {
         type: String,
         required: true,
-        unique: true,
-        lowercase: true, // Convierte el email a minúsculas
-        match: [/.+@.+\..+/, 'Por favor, ingresa un email válido'], // Validación email valido
+        unique: true
     },
     password: {
         type: String,
