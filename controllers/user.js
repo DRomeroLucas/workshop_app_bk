@@ -81,6 +81,54 @@ export const register = async (req, res) => {
     }
 }
 
+//
+
+// Metodo para realizar eliminado logico (softdelete)
+export const softDelete = async (req, res) => {
+    try {
+        // Recoger datos del usuario autenticado
+        const userId = req.user.userId;
+
+        // Verificar que el usuario que me trae el token si este en base de datos
+        const user = User.findById(userId);
+
+        if (!user) {
+            return res.status(404).send({
+                status: "error",
+                message: "Usuario no encontrado"
+            });
+        }
+
+        // Eliminar el usuario
+        // * El metodo findByIdAndUpdate busca un documento segun su id y actualiza los datos
+        // * Parametros:
+        // * 1. Id del documento 2. Lo que queramos actulizar 3. { new: true } -> para que el método devuelva el documento actualizado
+        const deletedUser = await User.findByIdAndUpdate(userId, { isDeleted: true }, { new: true });
+
+        if (!deletedUser) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Error al eliminar el usuario'
+            });
+        }
+        return res.status(200).json({
+            status: 'success',
+            message: 'Perfil eliminado correctamente'
+        });
+
+    } catch (error) {
+        console.error(`Error en el proceso de eliminar usuario:, ${error}`);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Error al eliminar usuario',
+            error: {
+                name: error.name,
+                message: error.message
+            }
+        });
+    }
+}
+
 // Metodo para realizar login
 export const login = async (req, res) => {
     try {
