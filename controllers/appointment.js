@@ -1,3 +1,4 @@
+import appointments from '../models/appointments.js';
 import Appointment from '../models/appointments.js';
 
 // Test appointment controller
@@ -62,8 +63,16 @@ export const createAppointment = async (req, res) => {
 // Get service by Id
 export const getAppointment = async (req, res) => {
     try {
-        const appointment = await Service.findById(req.data.id);
-        res.status(200).json(services);
+
+        // Find appointment and use to replace ID's for complete documents
+        const appointments = await Appointment.find()
+        .populate('idMechanic', 'name')  // Replace idMechanic with the name field
+        .populate('idService', 'name'); // Replace idService with the name field
+
+        return res.status(200).json({
+            status: 'success',
+            appointments
+        });
     } catch (error) {
         res.status(500).json({
             status: "Error",
