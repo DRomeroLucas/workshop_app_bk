@@ -21,25 +21,25 @@ export const createAppointment = async (req, res) => {
                 message: "Faltan datos por enviar"
             })
         };
-
-        // Create new appointment object
-        let appointment_to_save = new Appointment(data);
-
+        
         //  Check if tere is an existing appointment
         const existingAppointment = await Appointment.findOne({
             idMechanic : data.idMechanic,
             date: data.date,
             time: data.time,
-            status: "asignada"
+            status: "Asignado"
         });
 
         // Validate appointment
         if (existingAppointment) {
             return res.status(409).send({
                 status: "success",
-                message: "El mécanico seleccina ya tiene cita asignada, por favor seleccione otra franja horario distinta u otro mécanico"
+                message: "El mécanico ya tiene cita asignada, por favor seleccione otra franja horario distinta u otro mécanico"
             });
         }
+
+        // Create new appointment object
+        let appointment_to_save = new Appointment(data);
 
         // Save appointment
         await appointment_to_save.save();
@@ -47,12 +47,11 @@ export const createAppointment = async (req, res) => {
         // Return appointment made
         return res.status(201).json({
             message: "Cita registrada exitosamente!, te esperamos :)",
-            params,
-            user_to_save
+            appointment: appointment_to_save
         });
 
     } catch (error) {
-        res.status(400).json({
+        res.status(500).json({
             status: "error",
             message: 'No es posible crear el servicio',
             error
@@ -79,13 +78,26 @@ export const getAppointment = async (req, res) => {
     try {
 
         // Find appointment and use to replace ID's for complete documents
-        const appointments = await Appointment.find()
-        .populate('idMechanic', 'name')  // Replace idMechanic with the name field
-        .populate('idService', 'name'); // Replace idService with the name field
+        const appointment = await Appointment.find()
+        .populate({
+            path: 'idMechanic',
+            select: "name last_name"
+        })  // Replace idMechanic with the name and last_name fields
+        .populate({
+            path: 'idService',
+            select: 'service_name price'
+        }); // Replace idService with the name field
 
+        if (!appointment) return res.status(404).json({ message: "No se encontro cita"});
+
+        const appointmentWithPrice = {
+            ...appointment.toObject(),
+            price: appointment.idService.price
+        };
+        // Mapping appointments to agregate
         return res.status(200).json({
             status: 'success',
-            appointments
+            appointmentWithPrice
         });
     } catch (error) {
         res.status(500).json({
