@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createService, testService, listServices, getService, updateService, deleteService, activateService, hardDeleteService } from "../controllers/service.js"
+import { createService, testService, listServices, getService, updateService, deleteService, activateService, hardDeleteService } from "../controllers/service.js";
 import { ensureAuth } from "../middlewares/auth.js";
 
 const router = Router();
@@ -12,6 +12,5 @@ router.put('/upgrade-service/:id', updateService);
 router.delete('/delete/:id', deleteService);
 router.delete('/permanent-erase/:id', hardDeleteService);
 router.put('/reactivate/:id', activateService);
-
 
 export default router;

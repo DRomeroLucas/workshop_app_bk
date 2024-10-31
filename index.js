@@ -1,14 +1,10 @@
-// Improts (set from package.json)
+// Imports (set from package.json)
 import express from "express";
 import connection from "./database/connection.js"
 import cors from "cors";
 import bodyParser from "body-parser";
-import serviceRoutes from './routes/services.js';
-import appointmentRoutes from './routes/appointments.js';
-// import UserRoutes from "./routes/users.js"
-// import PublicationRoutes from "./routes/publications.js"
-// import FollowRoutes from "./routes/follows.js"
-
+import userRoutes from "./routes/users.js"
+import ServicesRoutes from "./routes/services.js";
 
 //  TEST CONNECTION API
 console.log("API en ejecución!");
@@ -18,7 +14,7 @@ connection();
 
 //  Create Node Server
 const app = express();
-const port = process.env.PORT || 4200;
+const port = process.env.PORT || 4500;
 
 // CORS
 app.use(cors({
@@ -33,11 +29,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas del aplicativo
-app.use('/api/service', serviceRoutes);
-app.use('/api/appointment', appointmentRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/service', ServicesRoutes);
 
 // Setting server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log("Servidor en ejecución", port);
 });
 
