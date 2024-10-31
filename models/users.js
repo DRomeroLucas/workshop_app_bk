@@ -37,6 +37,6 @@ const userSchema = Schema({
 });
 
 // Paginación
-UserSchema.plugin(mongoosePaginate);
+userSchema.plugin(mongoosePaginate);
 
-export default model("User", UserSchema, "users");
+export default model("User", userSchema, "users");

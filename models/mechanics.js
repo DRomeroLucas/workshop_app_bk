@@ -38,4 +38,4 @@ const mechanicSchema = Schema({
 // Paginación
 mechanicSchema.plugin(mongoosePaginate);
 
-export default model("Mechanic", mechanicSchema, "users");
+export default model("Mechanic", mechanicSchema, "mechanics");

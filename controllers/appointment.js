@@ -85,3 +85,30 @@ export const getAppointment = async (req, res) => {
         });
     }
 };
+
+// UpdateAppointment
+export const updateAppointment = async (req, res) => {
+    try {
+        const appointment = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true});
+
+        if(!appointment) {
+            return res.status(404).json({
+                status: 'error',
+                message: "Cita no encontrada",
+                error
+            })
+        };
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Cita actualizada!',
+            appointment: appointment
+        });
+    } catch (error) {
+        res.status(400).json({
+            status: 'error',
+            message: "No se pudo actualizar la cita",
+            error
+        });
+    }
+};

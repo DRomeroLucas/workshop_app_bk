@@ -4,7 +4,8 @@ import connection from "./database/connection.js"
 import cors from "cors";
 import bodyParser from "body-parser";
 import userRoutes from "./routes/users.js"
-import ServicesRoutes from "./routes/services.js";
+import servicesRoutes from "./routes/services.js";
+import appointmentRoutes from "./routes/appointments.js";
 
 //  TEST CONNECTION API
 console.log("API en ejecución!");
@@ -30,7 +31,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas del aplicativo
 app.use('/api/user', userRoutes);
-app.use('/api/service', ServicesRoutes);
+app.use('/api/service', servicesRoutes);
+app.use('/api/appointment', appointmentRoutes);
 
 // Setting server
 app.listen(port, '0.0.0.0', () => {
