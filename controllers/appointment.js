@@ -1,4 +1,3 @@
-import appointments from '../models/appointments.js';
 import Appointment from '../models/appointments.js';
 
 // Test appointment controller
@@ -73,36 +72,15 @@ export const listAppointments = async (req, res) => {
     }
 };
 
-// Get appointment by Id
+// Get appointment by ID, without populate
 export const getAppointment = async (req, res) => {
     try {
-
-        // Find appointment and use to replace ID's for complete documents
-        const appointment = await Appointment.find()
-        .populate({
-            path: 'idMechanic',
-            select: "name last_name"
-        })  // Replace idMechanic with the name and last_name fields
-        .populate({
-            path: 'idService',
-            select: 'service_name price'
-        }); // Replace idService with the name field
-
-        if (!appointment) return res.status(404).json({ message: "No se encontro cita"});
-
-        const appointmentWithPrice = {
-            ...appointment.toObject(),
-            price: appointment.idService.price
-        };
-        // Mapping appointments to agregate
-        return res.status(200).json({
-            status: 'success',
-            appointmentWithPrice
-        });
+        const appointments = await Appointment.findById(req.params.id);
+        res.status(200).json(appointments);
     } catch (error) {
         res.status(500).json({
-            status: "Error",
-            message: "Error al obtener la cita",
+            status: "error",
+            message: "Error al obtener el servicio",
             error
         });
     }
