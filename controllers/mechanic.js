@@ -58,3 +58,17 @@ export const createMechanic = async (req, res) => {
         });
     }
 };
+
+// List all mechanics
+export const listMechanics = async (req, res) => {
+    try {
+        const mechanics = await Mechanic.find({}, '-password');
+        res.status(200).json(mechanics);
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Error al obtener a los mecánicos',
+            error
+        });
+    }
+};
