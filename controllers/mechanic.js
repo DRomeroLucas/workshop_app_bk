@@ -72,3 +72,17 @@ export const listMechanics = async (req, res) => {
         });
     }
 };
+
+// Get mecanic by id
+export const getMechanic = async (req, res)=> {
+    try {
+        const mechanic = await Mechanic.findById(req.params.id);
+        res.status(200).json(mechanic);
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Error al obtener al mecánico',
+            error
+        })
+    }
+}
