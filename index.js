@@ -6,6 +6,7 @@ import bodyParser from "body-parser";
 import userRoutes from "./routes/users.js"
 import servicesRoutes from "./routes/services.js";
 import appointmentRoutes from "./routes/appointments.js";
+import mechanicRoutes from "./routes/mechanics.js";
 
 //  TEST CONNECTION API
 console.log("API en ejecución!");
@@ -33,6 +34,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/user', userRoutes);
 app.use('/api/service', servicesRoutes);
 app.use('/api/appointment', appointmentRoutes);
+app.use('/api/mechanic', mechanicRoutes);
 
 // Setting server
 app.listen(port, '0.0.0.0', () => {
