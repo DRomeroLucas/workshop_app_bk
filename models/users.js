@@ -4,32 +4,35 @@ import mongoosePaginate from "mongoose-paginate-v2";
 const userSchema = Schema({
     role: {
         type: String,
-        require: true,
-        default: "Cliente", //Valor por defecto
+        required: true,
+        default: "Client", //Valor por defecto
     },
     name: {
         type: String,
-        require: true,
+        required: true,
     },
     last_name: {
         type: String,
-        require: true,
-    },
-    last_name: {
-        type: String,
-        require: true,
+        required: true,
     },
     document: {
         type: String,
-        require: true,
+        required: true,
+        unique: true
     },
     email: {
         type: String,
-        require: true,
+        required: true,
+        unique: true
     },
     password: {
         type: String,
-        require: true,
+        required: true,
+    },
+    isDeleted: {
+        type: Boolean,
+        required: true,
+        default: false
     },
 });
 

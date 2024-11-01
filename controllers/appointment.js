@@ -20,25 +20,26 @@ export const createAppointment = async (req, res) => {
                 message: "Faltan datos por enviar"
             })
         };
-
-        // Create new appointment object
-        let appointment_to_save = new Appointment(data);
-
+      
         //  Check if tere is an existing appointment
         const existingAppointment = await Appointment.findOne({
             idMechanic : data.idMechanic,
             date: data.date,
             time: data.time,
-            status: "asignada"
+            status: "Asignado"
+
         });
 
         // Validate appointment
         if (existingAppointment) {
             return res.status(409).send({
                 status: "success",
-                message: "El mécanico seleccina ya tiene cita asignada, por favor seleccione otra franja horario distinta u otro mécanico"
+                message: "El mécanico ya tiene cita asignada, por favor seleccione otra franja horario distinta u otro mécanico"
             });
         }
+
+        // Create new appointment object
+        let appointment_to_save = new Appointment(data);
 
         // Save appointment
         await appointment_to_save.save();
@@ -46,12 +47,11 @@ export const createAppointment = async (req, res) => {
         // Return appointment made
         return res.status(201).json({
             message: "Cita registrada exitosamente!, te esperamos :)",
-            params,
-            user_to_save
+            appointment: appointment_to_save
         });
 
     } catch (error) {
-        res.status(400).json({
+        res.status(500).json({
             status: "error",
             message: 'No es posible crear el servicio',
             error
@@ -73,15 +73,15 @@ export const listAppointments = async (req, res) => {
     }
 };
 
-// Get service by Id
+// Get appointment by ID, without populate
 export const getAppointment = async (req, res) => {
     try {
-        const appointment = await Service.findById(req.data.id);
-        res.status(200).json(services);
+        const appointments = await Appointment.findById(req.params.id);
+        res.status(200).json(appointments);
     } catch (error) {
         res.status(500).json({
-            status: "Error",
-            message: "Error al obtener la cita",
+            status: "error",
+            message: "Error al obtener el servicio",
             error
         });
     }

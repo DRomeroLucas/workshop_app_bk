@@ -13,5 +13,4 @@ router.delete('/delete/:id', deleteService);
 router.delete('/permanent-erase/:id', hardDeleteService);
 router.put('/reactivate/:id', activateService);
 
-
 export default router;
