@@ -112,3 +112,58 @@ export const updateMechanic = async (req, res) => {
         );
     }
 };
+
+// Logical erase
+export const deletedMechanic = async (req, res) => {
+    try {
+        const deletedMechanic = await Mechanic.findByIdAndUpdate(
+            req.params.id,
+            { isDelete: true },
+            { new: true}
+        );
+
+        if(!deletedMechanic) {
+            return res.status(404).json({ message: 'Mecánico no encontrado'});
+        }
+        res.status(200).json({ message: 'Mécanico eliminado'});
+    } catch (error) {
+        res.status(500).json({ message: 'Error al eliminar al mecánico'});
+    }
+}
+
+// Reactivate mechanic
+export const reactivateMechanic = async (req, res) => {
+    try {
+        const deletedMechanic = await Mechanic.findByIdAndUpdate(
+            req.params.id,
+            { isDelete: false },
+            { new: true}
+        );
+
+        if(!deletedMechanic) {
+            return res.status(404).json({ message: 'Mecánico no encontrado'});
+        }
+        res.status(200).json({ message: 'Mécanico reactivado'});
+    } catch (error) {
+        res.status(500).json({ message: 'Error al reactivar al mecánico'});
+    }
+}
+
+// Eliminate mechanic to the Database
+export const hardDeleteMechanic = async (req, res) => {
+    try {
+        const deletedMechanic = await Mechanic.findByIdAndDelete(req.params.id);
+        if (!deletedMechanic) {
+            res.status(404).json({
+                message: 'No se encontró el mecánico a eliminar'
+            });
+        }
+        res.status(200).json({ message: 'Mecánico eliminado de forma permanenete'});
+    } catch (error) {
+        res.status(500).json({ 
+            status: 'error',
+            message: 'Error al eliminar el mecánico',
+            error
+    });
+    }
+}
