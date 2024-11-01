@@ -32,7 +32,7 @@ const appointmentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        default: 'Asignado'
+        default: 'Asignada'
     },
     }, {
         timestamps: true
