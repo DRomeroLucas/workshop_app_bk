@@ -86,3 +86,54 @@ export const getAppointment = async (req, res) => {
         });
     }
 };
+
+// UpdateAppointment
+export const updateAppointment = async (req, res) => {
+    try {
+        const appointment = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true});
+
+        if(!appointment) {
+            return res.status(404).json({
+                status: 'error',
+                message: "Cita no encontrada",
+                error
+            })
+        };
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Cita actualizada!',
+            appointment: appointment
+        });
+    } catch (error) {
+        res.status(400).json({
+            status: 'error',
+            message: "No se pudo actualizar la cita",
+            error
+        });
+    }
+};
+
+// Permanent delete
+export const deleteAppointment = async(req, res) => {
+    try {
+        const deletedAppointment = await Appointment.findByIdAndDelete(req.params.id);
+
+        if(!deletedAppointment){
+            res.status(400).json({
+                message: "No se encontró la cita a eliminar"
+            });
+        }
+
+        res.status(200).json({
+            message: 'Cita eliminada con éxito'
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Error al eliminar la cita',
+            error
+        });
+    }
+}

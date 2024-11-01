@@ -1,12 +1,7 @@
 import { model, Schema } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
-const userSchema = Schema({
-    role: {
-        type: String,
-        required: true,
-        default: "Client", //Valor por defecto
-    },
+const mechanicSchema = Schema({
     name: {
         type: String,
         required: true,
@@ -29,6 +24,10 @@ const userSchema = Schema({
         type: String,
         required: true,
     },
+    shift: {
+        type: Array,
+        required: true
+    },
     isDeleted: {
         type: Boolean,
         required: true,
@@ -37,6 +36,6 @@ const userSchema = Schema({
 });
 
 // Paginación
-userSchema.plugin(mongoosePaginate);
+mechanicSchema.plugin(mongoosePaginate);
 
-export default model("User", userSchema, "users");
+export default model("Mechanic", mechanicSchema, "mechanics");

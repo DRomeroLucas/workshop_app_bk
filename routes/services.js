@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createService, testService, listServices, getService, updateService, deleteService, activateService, hardDeleteService } from "../controllers/service.js"
+import { createService, testService, listServices, getService, updateService, deleteService, activateService, hardDeleteService } from "../controllers/service.js";
 import { ensureAuth } from "../middlewares/auth.js";
 
 const router = Router();

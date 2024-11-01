@@ -17,7 +17,7 @@ export const createService = async (req, res) => {
         if (!params.service_name || !params.description || !params.price) {
             return res.status(400).json({
                 status: "error",
-                message: "Faltan datos para enviar, por favor, verifique"
+                message: "Faltan datos para enviar, por favor verifique"
             });
         }
 
@@ -61,7 +61,9 @@ export const listServices = async (req, res) => {
         res.status(200).json(services);
     } catch (error) {
         res.status(500).json({
-            message: 'Error al obtener los servicios', error
+            status: "error" ,
+            message: 'Error al obtener los servicios',
+            error
         });
     }
 };
@@ -141,13 +143,16 @@ export const hardDeleteService = async (req, res) => {
     try {
         const deletedService = await Service.findByIdAndDelete(req.params.id);
         if (!deletedService) {
-            return res.status(404).json({ message: 'Servicio no encontrado'});
+            res.status(404).json({
+                message: 'No se encontró el servicio a eliminar'
+            });
         }
         res.status(200).json({ message: 'Servicio eliminado de forma permanenete'});
     } catch (error) {
         res.status(500).json({ 
-            messahge: 'Error al eliminar el servicio',
-        error
+            status: 'error',
+            message: 'Error al eliminar el servicio',
+            error
     });
     }
 }
