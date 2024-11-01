@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import { model, Schema } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
-
 const appointmentSchema = new mongoose.Schema({
     idMechanic: {
         type: mongoose.Schema.Types.ObjectId,
@@ -33,7 +32,7 @@ const appointmentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        default: 'Asignado'
+        default: 'Asignada'
     },
     }, {
         timestamps: true

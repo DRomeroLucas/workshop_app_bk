@@ -20,13 +20,14 @@ export const createAppointment = async (req, res) => {
                 message: "Faltan datos por enviar"
             })
         };
-        
+      
         //  Check if tere is an existing appointment
         const existingAppointment = await Appointment.findOne({
             idMechanic : data.idMechanic,
             date: data.date,
             time: data.time,
             status: "Asignado"
+
         });
 
         // Validate appointment
