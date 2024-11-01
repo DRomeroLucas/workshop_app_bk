@@ -83,6 +83,32 @@ export const getMechanic = async (req, res)=> {
             status: 'error',
             message: 'Error al obtener al mecánico',
             error
-        })
+        });
     }
-}
+};
+
+// Update mechanic
+export const updateMechanic = async (req, res) => {
+    try {
+        const { name, last_name, document, email, password, shift } = req.body;
+        const updateMechanic = await Mechanic.findByIdAndUpdate(
+            req.params.id,
+            { name, last_name, document, email, password, shift },
+            { new: true }
+        );
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Datos del mecánico actualizados!',
+            updateMechanic
+        });
+    } catch (error) {
+        res.status(500).json(
+            {
+                status: 'error',
+                message: 'Error al actualizar los datos del mecánico',
+                error
+            }
+        );
+    }
+};
