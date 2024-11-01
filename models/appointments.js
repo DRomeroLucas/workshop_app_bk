@@ -41,4 +41,4 @@ const appointmentSchema = new mongoose.Schema({
 // Pagination
 appointmentSchema.plugin(mongoosePaginate);
 
-export default model("Appointment", appointmentSchema, "appointmentSchemas");
+export default model("Appointment", appointmentSchema, "appointments");
