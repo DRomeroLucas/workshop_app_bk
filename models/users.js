@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
-const UserSchema = Schema({
+const userSchema = Schema({
     role: {
         type: String,
         required: true,
