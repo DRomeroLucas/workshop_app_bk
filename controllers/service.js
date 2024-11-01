@@ -143,13 +143,16 @@ export const hardDeleteService = async (req, res) => {
     try {
         const deletedService = await Service.findByIdAndDelete(req.params.id);
         if (!deletedService) {
-            return res.status(404).json({ message: 'Servicio no encontrado'});
+            res.status(404).json({
+                message: 'No se encontró el servicio a eliminar'
+            });
         }
         res.status(200).json({ message: 'Servicio eliminado de forma permanenete'});
     } catch (error) {
         res.status(500).json({ 
-            messahge: 'Error al eliminar el servicio',
-        error
+            status: 'error',
+            message: 'Error al eliminar el servicio',
+            error
     });
     }
 }

@@ -112,3 +112,27 @@ export const updateAppointment = async (req, res) => {
         });
     }
 };
+
+// Permanent delete
+export const deleteAppointment = async(req, res) => {
+    try {
+        const deletedAppointment = await Appointment.findByIdAndDelete(req.params.id);
+
+        if(!deletedAppointment){
+            res.status(400).json({
+                message: "No se encontró la cita a eliminar"
+            });
+        }
+
+        res.status(200).json({
+            message: 'Cita eliminada con éxito'
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Error al eliminar la cita',
+            error
+        });
+    }
+}
