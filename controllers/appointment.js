@@ -73,10 +73,13 @@ export const listAppointments = async (req, res) => {
     }
 };
 
-// Get appointment by ID, without populate
+// Get appointment by ID
 export const getAppointment = async (req, res) => {
     try {
-        const appointments = await Appointment.findById(req.params.id);
+        const appointments = await Appointment.findById(req.params.id)
+        .populate('idMechanic' ,'name last_name')
+        .populate('idClient', 'name last_name')
+        .populate('idService', 'service_name');
         res.status(200).json(appointments);
     } catch (error) {
         res.status(500).json({
@@ -90,7 +93,7 @@ export const getAppointment = async (req, res) => {
 // UpdateAppointment
 export const updateAppointment = async (req, res) => {
     try {
-        const appointment = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true});
+        const appointment = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
         if(!appointment) {
             return res.status(404).json({
