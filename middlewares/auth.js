@@ -6,7 +6,7 @@ import { secret } from "../services/jwt.js";
 export const ensureAuth = (req, res, next) => {
 
     // Check
-    if(!req.headers.authorization) {
+    if (!req.headers.authorization) {
         return res.status(403).send({
             status: "error",
             message: "La petición no tiene la cabecera de autenticación"
@@ -14,14 +14,14 @@ export const ensureAuth = (req, res, next) => {
     };
 
     // Clean token
-    const token = req.headers.authorization.replace(/['"]/g,'').replace("Bearer ", "");
+    const token = req.headers.authorization.replace(/['"]/g, '').replace("Bearer ", "");
 
     // Verify token
     try {
         let payload = jwt.decode(token, secret)
 
         // Verify token validity
-        if(payload.exp <= moment.unix()){
+        if (payload.exp <= moment.unix()) {
             return res.status(401).send({
                 status: "error",
                 message: "El token ha expirado"
@@ -29,9 +29,9 @@ export const ensureAuth = (req, res, next) => {
         }
 
         // Add user info to request and continue
-        req.user= payload;
+        req.user = payload;
         next();
-        
+
     } catch (error) {
         return res.status(401).send({
             status: "error",
