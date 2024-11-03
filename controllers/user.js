@@ -33,7 +33,7 @@ export const register = async (req, res) => {
                 if (!emailValido.test(dataUser.email)) {
                     return res.status(400).json({
                         status: 'error',
-                        message: 'Por favor, ingresa un email válido para todos los usuarios'
+                        message: 'Por favor, ingresa un email válido'
                     });
                 }
 
@@ -134,7 +134,7 @@ export const register = async (req, res) => {
         }
 
     } catch (error) {
-        console.log(error);
+        console.log(`Error al guardar el usuario en la base de datos ${error}`);
         return res.status(500).json({
             status: 'error',
             message: 'Error al guardar el usuario en la base de datos',
@@ -149,6 +149,26 @@ export const register = async (req, res) => {
 // Listar usuarios todo los usuarios sin impotar rol o si estan eliminados   
 export const listUsers = async (req, res) => {
     try {
+
+        const authenticatedUser = req.user
+        // Validar que si halla usuario autenticado
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
+        console.log(authenticatedUser.role);
+
+        // Validar que sea admin el usuario autenticado
+        if (authenticatedUser.role !== 'Admin') {
+            return res.status(403).json({
+                status: 'error',
+                message: 'Usuario no autorizado'
+            });
+        }
+
         // Enviar por url numer de paginacion
         let page = req.params.page ? parseInt(req.params.page, 10) : 1;
 
@@ -184,11 +204,15 @@ export const listUsers = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error al listar el perfil de los usuarios: ", error);
+        console.log(`Error al listar el perfil de los usuarios: ${error}`);
         // Devolver mensaje de error
         return res.status(500).send({
             status: "error",
-            message: "Error al listar los usuarios"
+            message: "Error al listar los usuarios",
+            error: {
+                name: error.name,
+                message: error.message
+            }
         });
     }
 };
@@ -196,6 +220,24 @@ export const listUsers = async (req, res) => {
 // Listar clientes que no estan eliminados (desactivados)   
 export const listClients = async (req, res) => {
     try {
+
+        const authenticatedUser = req.user
+        // Validar que si halla usuario autenticado
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
+        // Validar que sea admin el usuario autenticado
+        if (authenticatedUser.role !== 'Admin') {
+            return res.status(403).json({
+                status: 'error',
+                message: 'Usuario no autorizado'
+            });
+        }
+
         // Enviar por url numer de paginacion
         let page = req.params.page ? parseInt(req.params.page, 10) : 1;
 
@@ -231,11 +273,144 @@ export const listClients = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error al listar el perfil de los usuarios: ", error);
+        console.log(`Error al listar el perfil de los usuarios: ${error}`);
         // Devolver mensaje de error
         return res.status(500).send({
             status: "error",
-            message: "Error al listar los usuarios"
+            message: "Error al listar los usuarios",
+            error: {
+                name: error.name,
+                message: error.message
+            }
+        });
+    }
+};
+
+// Metodo para actualizar usuarios
+export const updateUsers = async (req, res) => {
+    try {
+        // Usuario autenticado
+        const authenticatedUser = req.user
+        // Validar que si halla usuario autenticado
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
+        if (authenticatedUser.role !== 'Admin') {
+            return res.status(403).json({
+                status: 'error',
+                message: 'Usuario no autorizado'
+            });
+        }
+
+        // Id del usuario a actualizar
+        const idUserToUpdate = req.params.id;
+
+        // Validar si existe ese usuario a actulizar
+        const userToUpdate = await User.findById(idUserToUpdate);
+
+        if (!userToUpdate) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Usuario no encontrado'
+            });
+        }
+
+        const dataToUpdate = req.body;
+
+        // Eliminar datos que no se actualizaran
+        delete dataToUpdate.__v;
+        delete dataToUpdate.isDeleted;
+        delete dataToUpdate.document;
+        
+        // * Campo password
+
+        // Encriptar la contrena si se quiere actualizar
+        if (dataToUpdate.password) {
+            try {
+                let password = await bcrypt.hash(dataToUpdate.password, 10);
+                dataToUpdate.password = password;
+            } catch (hashError) {
+                return res.status(500).send({
+                    status: "error",
+                    message: "Error al cifrar la contraseña"
+                });
+            }
+        } else {
+            delete dataToUpdate.password;
+        }
+
+        // * Campo email
+
+
+        if (dataToUpdate.email) {
+            // Validar si el email es valido
+            const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailValido.test(dataToUpdate.email)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Por favor, ingresa un email válido'
+                });
+            }
+            // Validar si el email que se quiere actualizar es igual al que ya existe 
+            if (dataToUpdate.email === userToUpdate.email) {
+                delete dataToUpdate.email;
+            } else {
+                // Verificar si el nuevo email ya existe en otro usuario
+                const emailExists = await User.findOne({ email: dataToUpdate.email });
+                if (emailExists) {
+                    return res.status(400).json({
+                        status: 'error',
+                        message: 'Email invalido'
+                    });
+                }
+            }
+        }
+
+        // * Campo documento
+        if (dataToUpdate.document) {
+            // Validar si el documento que se quiere actualizar es igual al que ya existe 
+            if (dataToUpdate.document === userToUpdate.document) {
+                delete dataToUpdate.document;
+            } else {
+                // Verificar si el nuevo documento ya existe en otro usuario
+                const documentExists = await User.findOne({ document: dataToUpdate.document });
+                if (documentExists) {
+                    return res.status(400).json({
+                        status: 'error',
+                        message: 'Documento invalido'
+                    });
+                }
+            }
+        }
+        // Buscar y actualizar el usuario
+        let userUpdated = await User.findByIdAndUpdate(idUserToUpdate, dataToUpdate, { new: true });
+
+        if (!userUpdated) {
+            return res.status(400).send({
+                status: "error",
+                message: "Error al actualizar el usuario"
+            });
+        };
+
+        // Devolver la respuesta exitosa
+        return res.status(200).json({
+            status: "success",
+            message: "Usuario actualizado correctamente",
+            user: userUpdated
+        });
+    } catch (error) {
+        console.error(`Error en el proceso de actualizar usuario:, ${error}`);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Error en el proceso de actualizar usuario:',
+            error: {
+                name: error.name,
+                message: error.message
+            }
         });
     }
 };
@@ -243,6 +418,16 @@ export const listClients = async (req, res) => {
 // Metodo para realizar eliminado logico (softdelete)
 export const softDelete = async (req, res) => {
     try {
+
+        const authenticatedUser = req.user
+        // Validar que si halla usuario autenticado
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
         // Recoger datos del usuario autenticado
         const userId = req.user.userId;
 
@@ -285,16 +470,25 @@ export const softDelete = async (req, res) => {
         });
     }
 }
+
 // Metodo para reactivar a clientes 
 export const activateClients = async (req, res) => {
     try {
 
         // Usuario autenticado
-        const admin = req.user;
+        const authenticatedUser = req.user
+        // Validar que si halla usuario autenticado
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
 
         // Validar que sea admin el usuario autenticado
-        if (!admin || admin.role !== 'Admin') {
-            return res.status(401).json({
+        if (authenticatedUser.role !== 'Admin') {
+            return res.status(403).json({
                 status: 'error',
                 message: 'Usuario no autorizado'
             });
@@ -339,7 +533,10 @@ export const activateClients = async (req, res) => {
         return res.status(500).json({
             status: 'success',
             message: 'Error al reactivar el cliente',
-            error
+            error: {
+                name: error.name,
+                message: error.message
+            }
         });
     }
 }
@@ -416,6 +613,16 @@ export const login = async (req, res) => {
 // Metodo par mostrara el perfil de un usuario
 export const profile = async (req, res) => {
     try {
+        // Usuario autenticado
+        const authenticatedUser = req.user
+        // Validar que si halla usuario autenticado
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
         // Obtener Id del usuario desde los parametros pasados en la url
         const userId = req.params.id;
 
