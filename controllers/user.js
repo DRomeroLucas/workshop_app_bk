@@ -5,68 +5,133 @@ import { createToken } from '../services/jwt.js';
 // Metodo para crear usuarios
 export const register = async (req, res) => {
     try {
-        const dataUser = req.body
+        const dataUsers = req.body;
+        console.log(dataUsers);
+        // Validar que el cuerpo sea un arreglo
+        if (Array.isArray(dataUsers)) {
+        
+            // Validar que si halla informacion
+            if (dataUsers.length === 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Error, se requiere un arreglo de usuarios'
+                });
+            }
 
-        // Validar que lleguen los datos
-        if (!dataUser.name || !dataUser.last_name || !dataUser.document || !dataUser.email || !dataUser.password) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Error, por favor complete los campos'
+            // Validar cada usuario en el arreglo
+            for (const dataUser of dataUsers) {
+                // Validar que lleguen los datos requeridos
+                if (!dataUser.name || !dataUser.last_name || !dataUser.document || !dataUser.email || !dataUser.password) {
+                    return res.status(400).json({
+                        status: 'error',
+                        message: 'Error, por favor complete los campos para todos los usuarios'
+                    });
+                }
+
+                // Validar que el correo sea válido
+                const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailValido.test(dataUser.email)) {
+                    return res.status(400).json({
+                        status: 'error',
+                        message: 'Por favor, ingresa un email válido para todos los usuarios'
+                    });
+                }
+
+                // Convertir email a minúsculas
+                dataUser.email = dataUser.email.toLowerCase();
+
+                // Verificar duplicados en la base de datos
+                const userDuplicated = await User.findOne({
+                    $or: [
+                        { email: dataUser.email },
+                        { document: dataUser.document }
+                    ]
+                });
+
+                if (userDuplicated) {
+                    return res.status(400).json({
+                        status: 'error',
+                        message: 'Error, ya existe un usuario registrado con estas credenciales'
+                    });
+                }
+
+                // Encriptar contraseña para cada usuario
+                const salt = await bcrypt.genSalt(10);
+                dataUser.password = await bcrypt.hash(dataUser.password, salt);
+            }
+
+            // Crear e insertar todos los usuarios en la base de datos
+            const newUsers = await User.insertMany(dataUsers);
+
+            return res.status(200).json({
+                status: 'success',
+                message: 'Usuarios creados exitosamente',
+                newUsers
             });
-        }
 
-        // Validar que el correo sea valido
-        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        } else {
+            // Validar que lleguen los datos
+            if (!dataUsers.name || !dataUsers.last_name || !dataUsers.document || !dataUsers.email || !dataUsers.password) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Error, por favor complete los campos'
+                });
+            }
 
-        if (!emailValido.test(dataUser.email)) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Por favor, ingresa un email válido'
+            // Validar que el correo sea valido
+            const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailValido.test(dataUsers.email)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Por favor, ingresa un email válido'
+                });
+            }
+
+            // Agregar Lower Case a los correos
+            dataUsers.email = dataUsers.email.toLowerCase();
+
+
+            // *  Creacion de un objeto User
+            const newUser = new User(dataUsers);
+
+            // Validar si en la base de datos hay uno igual con los datos de email y documento
+            // * Usar metodo await porque es un metodo de mongoose
+            const userDuplicated = await User.findOne({
+                $or: [
+                    { email: dataUsers.email },
+                    { document: dataUsers.document }
+                ]
             });
-        }
 
-        // Agregar Lower Case a los correos
-        dataUser.email = dataUser.email.toLowerCase();
+            if (userDuplicated) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Error, ya existe un usuario registrado con estas credenciales'
+                });
+            }
 
+            // Generar saltos de la encriptacion 
+            // * bycrpt usa metodos asincronicos asi que recordar usar await
+            const salt = await bcrypt.genSalt(10);
 
-        // *  Creacion de un objeto User
-        const newUser = new User(dataUser);
+            // Encriptar password
+            const encryptedPassword = await bcrypt.hash(newUser.password, salt);
 
-        // Validar si en la base de datos hay uno igual con los datos de email y documento
-        // * Usar metodo await porque es un metodo de mongoose
-        const userDuplicated = await User.findOne({
-            $or: [
-                { email: dataUser.email },
-                { document: dataUser.document }
-            ]
-        });
+            // Asignar password encriptada a el objeto user
 
-        if (userDuplicated) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Error, ya existe un usuario registrado con estas credenciales'
+            newUser.password = encryptedPassword;
+
+            // Guardar el usuario en base de datos (usar await porque es metodo de mongoose )
+
+            await newUser.save();
+            return res.status(200).json({
+                status: 'success',
+                message: 'Usuario creado de exitosa',
+                newUser
             });
+
         }
-
-        // Generar saltos de la encriptacion 
-        // * bycrpt usa metodos asincronicos asi que recordar usar await
-        const salt = await bcrypt.genSalt(10);
-
-        // Encriptar password
-        const encryptedPassword = await bcrypt.hash(newUser.password, salt);
-
-        // Asignar password encriptada a el objeto user
-
-        newUser.password = encryptedPassword;
-
-        // Guardar el usuario en base de datos (usar await porque es metodo de mongoose )
-
-        await newUser.save();
-        return res.status(200).json({
-            status: 'error',
-            message: 'Usuario creado de exitosa',
-            newUser
-        });
 
     } catch (error) {
         console.log(error);
