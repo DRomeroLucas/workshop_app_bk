@@ -210,7 +210,7 @@ export const listClients = async (req, res) => {
         };
 
         // Realizar busqueda usuarios en base de datos de manera paginada
-        const users = await User.paginate({role: 'Client', isDeleted: false}, options);
+        const users = await User.paginate({ role: 'Client', isDeleted: false }, options);
 
         // Validacion de que si existan usuarios
         if (!users || users.docs.length === 0) {
@@ -238,7 +238,7 @@ export const listClients = async (req, res) => {
             message: "Error al listar los usuarios"
         });
     }
-};  
+};
 
 // Metodo para realizar eliminado logico (softdelete)
 export const softDelete = async (req, res) => {
@@ -282,6 +282,64 @@ export const softDelete = async (req, res) => {
                 name: error.name,
                 message: error.message
             }
+        });
+    }
+}
+// Metodo para reactivar a clientes 
+export const activateClients = async (req, res) => {
+    try {
+
+        // Usuario autenticado
+        const admin = req.user;
+
+        // Validar que sea admin el usuario autenticado
+        if (!admin || admin.role !== 'Admin') {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autorizado'
+            });
+        }
+
+        // Id del usuario a reactivar
+        let userId = req.params.id;
+
+        // Validar que si el usuario pasado se encuentra desactivado
+        const user = await User.findById(userId);
+
+        if (!user.isDeleted) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'El usuario se encuentra activo'
+            });
+        }
+
+        // Actualizar usuario
+        const activateUser = await User.findByIdAndUpdate(
+            userId,
+            { isDeleted: false },
+            { new: true }
+        );
+
+        // Validar si si se pudo hacer la actulizacion
+        if (!activateUser) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Usuario no encontrado'
+            });
+        }
+
+        // Respuesta exitosa
+        return res.status(200).json({
+            status: 'success',
+            message: 'Cliente reactivado'
+        });
+
+    } catch (error) {
+        console.log(`Error al reactivar el cliente ${error}`);
+        return res.status(500).json({
+            status: 'success',
+            message: 'Error al reactivar el cliente',
+            error
         });
     }
 }
