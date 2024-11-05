@@ -325,7 +325,7 @@ export const updateUsers = async (req, res) => {
         delete dataToUpdate.__v;
         delete dataToUpdate.isDeleted;
         delete dataToUpdate.document;
-        
+
         // * Campo password
 
         // Encriptar la contrena si se quiere actualizar
@@ -658,6 +658,130 @@ export const profile = async (req, res) => {
         return res.status(500).send({
             status: "error",
             message: "Error al obtener el perfil de usuario",
+            error: {
+                name: error.name,
+                message: error.message
+            }
+        });
+    }
+};
+
+// Metodo para actualizar el perfil (usuario autenticado)
+export const updateProfile = async (req, res) => {
+    try {
+        // Usuario autenticado
+        const authenticatedUser = req.user
+        // Validar que si halla usuario autenticado
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
+        // Id del usuario a actualizar
+        const idUser = req.user.userId;
+
+        // Validar si existe ese usuario a actulizar
+        const user = await User.findById(idUser);
+
+        if (!user) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Usuario no encontrado'
+            });
+        }
+
+        const dataToUpdate = req.body;
+
+        // Eliminar datos que no se actualizaran
+        delete dataToUpdate.__v;
+        delete dataToUpdate.isDeleted;
+
+        // * Campo password
+
+        // Encriptar la contrena si se quiere actualizar
+        if (dataToUpdate.password) {
+            try {
+                let password = await bcrypt.hash(dataToUpdate.password, 10);
+                dataToUpdate.password = password;
+            } catch (hashError) {
+                return res.status(500).send({
+                    status: "error",
+                    message: "Error al cifrar la contraseña"
+                });
+            }
+        } else {
+            delete dataToUpdate.password;
+        }
+
+        // * Campo email
+
+
+        if (dataToUpdate.email) {
+            // Validar si el email es valido
+            const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailValido.test(dataToUpdate.email)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Por favor, ingresa un email válido'
+                });
+            }
+            // Validar si el email que se quiere actualizar es igual al que ya existe 
+            if (dataToUpdate.email === user.email) {
+                delete dataToUpdate.email;
+            } else {
+                // Verificar si el nuevo email ya existe en otro usuario
+                const emailExists = await User.findOne({ email: dataToUpdate.email });
+                if (emailExists) {
+                    return res.status(400).json({
+                        status: 'error',
+                        message: 'Email invalido'
+                    });
+                }
+            }
+        }
+
+        // * Campo documento
+        if (dataToUpdate.document) {
+            // Validar si el documento que se quiere actualizar es igual al que ya existe 
+            if (dataToUpdate.document === user.document) {
+                delete dataToUpdate.document;
+            } else {
+                // Verificar si el nuevo documento ya existe en otro usuario
+                const documentExists = await User.findOne({ document: dataToUpdate.document });
+                if (documentExists) {
+                    return res.status(400).json({
+                        status: 'error',
+                        message: 'Documento invalido'
+                    });
+                }
+                if (req.user.role !== 'Admin') {
+                    delete dataToUpdate.document;
+                }
+            }
+        }
+        // Buscar y actualizar el usuario
+        let userUpdated = await User.findByIdAndUpdate(user._id, dataToUpdate, { new: true });
+
+        if (!userUpdated) {
+            return res.status(400).send({
+                status: "error",
+                message: "Error al actualizar el usuario"
+            });
+        };
+
+        // Devolver la respuesta exitosa
+        return res.status(200).json({
+            status: "success",
+            message: "Usuario actualizado correctamente",
+            user: userUpdated
+        });
+    } catch (error) {
+        console.error(`Error en el proceso de actualizar usuario:, ${error}`);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Error en el proceso de actualizar usuario:',
             error: {
                 name: error.name,
                 message: error.message
