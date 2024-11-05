@@ -1,7 +1,7 @@
 import { PaginationParameters } from 'mongoose-paginate-v2';
 import Mechanic from '../models/mechanics.js';
 import bcrypt from 'bcrypt';
-
+import {createTokenMechanic} from '../services/jwtMechanic.js';
 // Test controller mechanic
 export const testMechanic = (req, res) => {
     return res.status(200).send({
@@ -85,6 +85,62 @@ export const createMechanic = async (req, res) => {
         });
     }
 };
+
+// Login Mechanic
+export const login = async (req, res) => {
+    try {
+
+        const params = req.body;
+
+        if (!params.email || !params.password) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Error, complete el formulario porfavor'
+            });
+        }
+        const mechanic = await Mechanic.findOne({ email: params.email });
+        
+        if (!mechanic) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Credenciales incorrectas'
+            });
+        }
+        const passwordMechanic = await bcrypt.compare(params.password, mechanic.password);
+
+        if (!passwordMechanic) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Credenciales incorrectas'
+            });
+        }
+
+        const token = createTokenMechanic(mechanic);
+
+        return res.status(200).json({
+            status: "success",
+            message: "Autenticación exitosa",
+            token,
+            mechanic: {
+                id: mechanic._id,
+                name: mechanic.name,
+                last_name: mechanic.last_name,
+                email: mechanic.email,
+            }
+        });
+
+    } catch (error) {
+        console.error("Error en el proceso de inicio de sesión:", error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Error al iniciar sesión',
+            error: {
+                name: error.name,
+                message: error.message
+            }
+        });
+    }
+}
 
 // List all mechanics
 export const listMechanics = async (req, res) => {
