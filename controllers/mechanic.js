@@ -1,3 +1,4 @@
+import { PaginationParameters } from 'mongoose-paginate-v2';
 import Mechanic from '../models/mechanics.js';
 import bcrypt from 'bcrypt';
 
@@ -13,40 +14,63 @@ export const createMechanic = async (req, res) => {
     try {
         // Obtain params
         let params = req.body;
-
+        console.log(params);
         // Validate mechanic
-        if(!params.name || !params.last_name || !params.document || !params.email || !params.password || !params.shift) {
+        if (!params.name || !params.last_name || !params.document || !params.email || !params.password) {
             return res.status(400).json({
                 status: 'error',
-                message: 'Faltan datos por enviar, por favor verifique'
+                message: 'Error, por favor complete los campos'
             });
         }
 
-        // Avoid duplicate mechanics
-        const existingMechanic = await Mechanic.findOne({
-            $or: [{document: params.document}, {email: params.email}]
+        // Validate that the email is valid
+        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailValido.test(params.email)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Por favor, ingresa un email válido'
+            });
+        }
+
+        // Add Lower Case to mailings
+        params.email = params.email.toLowerCase();
+
+
+        // *  Creating a User object
+        const newMechanic = new Mechanic(params);
+
+        // Validate if in the database there is one with the same email and document data.
+        const mechanicDuplicated = await Mechanic.findOne({
+            $or: [
+                { email: params.email },
+                { document: params.document }
+            ]
         });
 
-        if (existingMechanic) {
-            return res.status(409).json({
+        if (mechanicDuplicated) {
+            return res.status(400).json({
                 status: 'error',
-                message: 'El mecánico ya existe'
+                message: 'Error, ya existe un usuario registrado con estas credenciales'
             });
         }
 
+        // Generate encryption salts 
+        const salt = await bcrypt.genSalt(10);
+
         // Encrypt password
-        params.password = await bcrypt.hash(params.password, 10);
+        const encryptedPassword = await bcrypt.hash(newMechanic.password, salt);
 
-        let mechanic = new Mechanic(params);
+        // Assign encrypted password to the user object
+        newMechanic.password = encryptedPassword;
 
-        // Save into the database
-        await mechanic.save();
+        // Guardar el usuario en base de datos (usar await porque es metodo de mongoose )
 
-        // Return mechanic
-        return res.status(201).json({
-            status: 'Success',
-            message: "Regirstro de mecánico exitoso",
-            mechanic: mechanic
+        await newMechanic.save();
+        return res.status(200).json({
+            status: 'success',
+            message: 'Mecanico creado de exitosa',
+            newMechanic
         });
 
     } catch (error) {
@@ -54,7 +78,10 @@ export const createMechanic = async (req, res) => {
         res.status(500).json({
             status: 'error',
             message: 'Error al crear el mecánico',
-            error: error.message
+            error: {
+                name: error.name,
+                message: error.message
+            }
         });
     }
 };

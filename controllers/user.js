@@ -6,10 +6,8 @@ import { createToken } from '../services/jwt.js';
 export const register = async (req, res) => {
     try {
         const dataUsers = req.body;
-        console.log(dataUsers);
         // Validar que el cuerpo sea un arreglo
         if (Array.isArray(dataUsers)) {
-
             // Validar que si halla informacion
             if (dataUsers.length === 0) {
                 return res.status(400).json({
