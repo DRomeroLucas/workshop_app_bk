@@ -76,10 +76,7 @@ export const listAppointments = async (req, res) => {
 // Get appointment by ID
 export const getAppointment = async (req, res) => {
     try {
-        const appointments = await Appointment.findById(req.params.id)
-        .populate('idMechanic' ,'name last_name')
-        .populate('idClient', 'name last_name')
-        .populate('idService', 'service_name');
+        const appointments = await Appointment.findById(req.params.id);
         res.status(200).json(appointments);
     } catch (error) {
         res.status(500).json({
