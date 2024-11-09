@@ -11,7 +11,7 @@ const secret = process.env.SECRET_KEY;
 // Generate token
 const createToken = (user) => {
     const payload = {
-        userId: user.id,
+        userId: user._id,
         role: user.role,
         iat: moment().unix(), // Issue date
         exp: moment().add(15, 'days').unix() // Expiration date
