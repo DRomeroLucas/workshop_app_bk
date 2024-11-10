@@ -13,7 +13,7 @@ const appointmentSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
-    idDay: {
+    day: {
         type: Number,
         required: true,
     },

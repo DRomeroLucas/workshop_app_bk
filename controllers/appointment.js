@@ -13,13 +13,97 @@ export const createAppointment = async (req, res) => {
     try {
 
         // Obtain data
-        let data = req.body;
+        const appointmentsData = req.body;
 
         // User authentication
         const authenticatedUser = req.user;
 
         // Validation
-        if(!authenticatedUser) {
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
+        // If the user authenticated is not admin, he can't create an appointment
+        if (authenticatedUser.role !== "Admin") {
+            return res.status(403).json({
+                status: 'error',
+                messsage: 'Usuario no autorizado'
+            })
+        };
+
+        // Validate if data from postam was an array of objects
+        if (Array.isArray(appointmentsData)) {
+
+            // Validate array isn't empty
+            if (appointmentsData.length === 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Error, se requiere un arreglo de citas'
+                });
+            }
+
+            for (const appointmentData of appointmentsData) {
+                // Validate Json came from input (Postman)
+                if (appointmentData.idMechanic !== '' || appointmentData.idClient !== '' || !appointmentData.day || !appointmentData.shift || appointmentData.services.length === 0 || appointmentData.status !== '' || appointmentData.comments !== '') {
+                    return res.status(400).json({
+                        status: 'error',
+                        message: 'Error, por favor complete los campos para todos los usuarios'
+                    });
+                }
+
+                let appointments = await insertMany(appointmentsData);
+
+                return res.status(200).json({
+                    status: 'success',
+                    message: 'Citas creados exitosamente',
+                    appointments
+                });
+            }
+        } else {
+
+            if (appointmentsData.idMechanic !== '' || appointmentsData.idClient !== '' || !appointmentsData.day || !appointmentsData.shift || appointmentsData.services.length === 0 || appointmentsData.status !== '' || appointmentsData.comments !== '') {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Error, por favor complete los campos para todos los usuarios'
+                });
+            }
+
+            let appointment = await new Appointment(data).save();
+
+            return res.status(200).json({
+                status: 'success',
+                message: 'Citas creados exitosamente',
+                appointment
+            });
+        }
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            status: "error",
+            message: 'No es posible crear la cita',
+            error: {
+                name: error.name,
+                message: error.message
+            }
+        });
+    }
+}
+
+// Method for assigning an appoitment to a customer and mechanic
+export const assigningAppointment = async (req, res) => {
+    try {
+        // Obtain data from postman body
+        let data = req.body;
+
+        // Getting user authenticated
+        const authenticatedUser = req.user;
+
+        // Validate that user is authenticated
+        if (!authenticatedUser) {
             return res.status(401).json({
                 status: 'error',
                 message: 'Usuario no autenticado'
@@ -27,60 +111,14 @@ export const createAppointment = async (req, res) => {
         }
 
         // If role is mechanic it can't create and appointment
-        if(authenticatedUser.role === "Mechanic") {
+        if (authenticatedUser.role === "Mechanic") {
             return res.status(403).json({
                 status: 'error',
                 messsage: 'Rol no autorizado'
             })
         };
-
-        // Assign idClient from athenticated user
-        data.idClient = authenticatedUser.userId;
-
-
-        //  Validate data
-        if (!data.idMechanic || !data.idDay || !data.shift || !data.services ) {
-            return res.status(400).json({
-                status: "error",
-                message: "Faltan datos por enviar"
-            })
-        };
-
-        //  Check if tere is an existing appointment
-        const existingAppointment = await Appointment.findOne({
-            idMechanic : data.idMechanic,
-            idDay: data.idDay,
-            shift: data.shift,
-            status: "Asignado"
-        });
-
-        // Validate appointment
-        if (existingAppointment) {
-            return res.status(409).send({
-                status: "success",
-                message: "El mécanico ya tiene cita asignada, por favor seleccione otra franja horario distinta u otro mécanico"
-            });
-        }
-
-        // Create new appointment object
-        let appointment_to_save = new Appointment(data);
-
-        // Save appointment
-        await appointment_to_save.save();
-
-        // Return appointment made
-        return res.status(201).json({
-            message: "Cita registrada exitosamente!, te esperamos :)",
-            appointment: appointment_to_save
-        });
-
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            status: "error",
-            message: 'No es posible crear la cita',
-            error
-        });
+
     }
 }
 
@@ -93,20 +131,20 @@ export const listAppointments = async (req, res) => {
         const authenticatedUser = req.user;
 
         // Validation
-        if(!authenticatedUser) {
+        if (!authenticatedUser) {
             return res.status(401).json({
                 status: 'error',
                 message: 'Usuario no autenticado'
-                    });
+            });
         }
 
         // Role verificaction
         if (req.user.role === 'Admin') {
-            appointments = await Appointment.find({ idClient: {$ne: null} });
+            appointments = await Appointment.find({ idClient: { $ne: null } });
         } else if (req.user.role === 'Mechanic') {
-            appointments = await Appointment.find({idMechanic: req.user.userId, status: "En progreso"});
+            appointments = await Appointment.find({ idMechanic: req.user.userId, status: "En progreso" });
         } else {
-            appointments = await Appointment.find({idClient: req.user.userId});
+            appointments = await Appointment.find({ idClient: req.user.userId });
         }
 
         res.status(200).json(appointments);
@@ -122,11 +160,11 @@ export const listAppointments = async (req, res) => {
 // Get appointment by ID
 export const getAppointment = async (req, res) => {
     try {
-        let  appointment;
+        let appointment;
         const authenticatedUser = req.user;
 
         // Validation
-        if(!authenticatedUser) {
+        if (!authenticatedUser) {
             return res.status(401).json({
                 status: 'error',
                 message: 'Usuario no autenticado'
@@ -151,7 +189,7 @@ export const getAppointment = async (req, res) => {
             });
         }
 
-        if(!appointment) {
+        if (!appointment) {
             return res.status(404).json({
                 status: "error",
                 message: "No se encontraron citas para este usuario",
@@ -191,11 +229,11 @@ export const updateAppointment = async (req, res) => {
         const { role } = authenticatedUser;
 
         // Get appointmentId
-        const { appointmentId } = req.params; 
+        const { appointmentId } = req.params;
 
         //  Get the curren Appointment before update
         const currentAppointment = await Appointment.findById(appointmentId);
-        if(!currentAppointment) {
+        if (!currentAppointment) {
             return req.status(404).json({
                 status: 'error',
                 message: 'Cita no encontrada'
@@ -208,25 +246,25 @@ export const updateAppointment = async (req, res) => {
         switch (role) {
             // Admin all things
             case 'Admin':
-                appointment = await Appointment.findByIdAndUpdate(appointmentId, req.body, { new:true });
+                appointment = await Appointment.findByIdAndUpdate(appointmentId, req.body, { new: true });
                 break;
             case 'Mechanic':
                 // Just status and comments
                 appointment = await Appointment.findOneAndUpdate(
-                    {_id: appointmentId, idMechanic: userId, status: "En progreso"},
+                    { _id: appointmentId, idMechanic: userId, status: "En progreso" },
                     { status, comments },
-                    { new:true}
+                    { new: true }
                 );
                 break;
             case "Client":
                 // Just status, shift and idDay
                 appointment = await Appointment.findOneAndUpdate(
-                    {_id: appointmentId, idClient: userId, status: "Asignado"},
+                    { _id: appointmentId, idClient: userId, status: "Asignado" },
                     { status, idDay, shift },
-                    { new:true}
+                    { new: true }
                 );
                 break;
-            
+
             default:
                 return res.status(403).json({
                     status: 'error',
@@ -234,7 +272,7 @@ export const updateAppointment = async (req, res) => {
                 })
         }
 
-        if(!appointment) {
+        if (!appointment) {
             return res.status(404).json({
                 status: 'error',
                 message: "Cita no encontrada",
@@ -257,13 +295,13 @@ export const updateAppointment = async (req, res) => {
 };
 
 // Permanent delete
-export const deleteAppointment = async(req, res) => {
+export const deleteAppointment = async (req, res) => {
     try {
         let deletedAppointment;
         const authenticatedUser = req.user;
 
         // Validation
-        if(!authenticatedUser) {
+        if (!authenticatedUser) {
             return res.status(401).json({
                 status: 'error',
                 message: 'Usuario no autenticado'
@@ -282,7 +320,7 @@ export const deleteAppointment = async(req, res) => {
         }
 
 
-        if(!deletedAppointment){
+        if (!deletedAppointment) {
             res.status(400).json({
                 message: "No se encontró la cita a eliminar"
             });
