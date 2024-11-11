@@ -79,7 +79,7 @@ export const createAppointment = async (req, res) => {
         });
     }
 }
-    
+
 // View available appointments (Not used)
 // export const assigningAppointment = async (req, res) => {
 //     try {
@@ -157,33 +157,48 @@ export const listAppointments = async (req, res) => {
 
             let appointments = await Appointment.paginate(filter, options);
 
-            return res.status(200).json({
-                status: 'success',
-                message: 'Listado exitoso',
-                appointments
-            });
-
-            // Validacion de que si existan usuarios
-            if (!appointments || appointments.docs.length === 0) {
+            if (!appointments) {
                 return res.status(404).send({
                     status: "error",
                     message: "No existen citas disponibles"
                 });
             }
 
-            res.status(200).json({
-                status: "success",
-                appointments: appointments.docs,
-                totalDocs: appointments.totalDocs,
-                totalPage: appointments.totalPages,
-                currentPage: appointments.page,
+            return res.status(200).json({
+                status: 'success',
+                message: 'Listado exitoso',
+                appointments
             });
 
         } else if (authenticatedUser.role === 'Mechanic') {
-            filter = { idMechanic: authenticatedUser.userId, status: { $in: [1, 2, 3, 4] } };
-            let appointments = await Appointment.find(filter)
-                .populate({ path: 'idMechanic', select: "name last_name " })
-                .populate({ path: 'idClient', select: "name last_name " });
+
+            let page = req.params.page ? parseInt(req.params.page, 10) : 1;
+            let appointmentsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 8;
+
+            const options = {
+                page: page,
+                limit: appointmentsPerPage,
+                select: "-__v",
+                populate: [
+                    { path: 'idMechanic', select: 'name last_name' },
+                    { path: 'idClient', select: 'name last_name' }
+                ]
+            };
+
+            const filter = {
+                idMechanic: authenticatedUser.userId,
+                status: { $in: [1, 2, 3, 4] }
+            };
+
+            let appointments = await Appointment.paginate(filter, options);
+
+            if (!appointments) {
+                return res.status(404).send({
+                    status: "error",
+                    message: "No existen citas disponibles"
+                });
+            }
+
             return res.status(200).json({
                 status: 'success',
                 message: 'Listado exitoso',
@@ -191,10 +206,25 @@ export const listAppointments = async (req, res) => {
             });
 
         } else {
-            filter = { idClient: authenticatedUser.userId };
-            let appointments = await Appointment.find(filter)
-                .populate({ path: 'idMechanic', select: "name last_name " })
-                .populate({ path: 'idClient', select: "name last_name " });
+
+            let page = req.params.page ? parseInt(req.params.page, 10) : 1;
+            let appointmentsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 8;
+
+            const options = {
+                page: page,
+                limit: appointmentsPerPage,
+                select: "-__v",
+                populate: [
+                    { path: 'idMechanic', select: 'name last_name' },
+                    { path: 'idClient', select: 'name last_name' }
+                ]
+            };
+
+            const filter = {
+                idClient: authenticatedUser.userId
+            };
+
+            let appointments = await Appointment.paginate(filter, options);
 
             if (!appointments) {
                 return res.status(404).send({
