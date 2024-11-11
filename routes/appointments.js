@@ -9,7 +9,7 @@ router.post ('/create-appointment',  ensureAuth, createAppointment);
 // router.get('/assigning-appointment', ensureAuth, assigningAppointment);
 router.get('/list-appointment/:page?', ensureAuth, listAppointments);
 router.get('/get-appointment/:appointmentId', ensureAuth, getAppointment);
-router.patch('/update-appointment/:appointmentId', ensureAuth, updateAppointment);
+router.put('/update-appointment/:appointmentId', ensureAuth, updateAppointment);
 router.delete('/delete-appointment/:appointmentId', ensureAuth, deleteAppointment);
 
 export default router;

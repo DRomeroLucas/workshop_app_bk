@@ -79,7 +79,7 @@ export const createAppointment = async (req, res) => {
         });
     }
 }
-
+    
 // View available appointments (Not used)
 // export const assigningAppointment = async (req, res) => {
 //     try {
@@ -184,7 +184,6 @@ export const listAppointments = async (req, res) => {
             let appointments = await Appointment.find(filter)
                 .populate({ path: 'idMechanic', select: "name last_name " })
                 .populate({ path: 'idClient', select: "name last_name " });
-            console.log(appointments);
             return res.status(200).json({
                 status: 'success',
                 message: 'Listado exitoso',
@@ -297,55 +296,27 @@ export const updateAppointment = async (req, res) => {
         // Get appointmentId
         const { appointmentId } = req.params;
 
-        //  Get the curren Appointment before update
-        const currentAppointment = await Appointment.findById(appointmentId);
-        if (!currentAppointment) {
-            return req.status(404).json({
-                status: 'error',
-                message: 'Cita no encontrada'
-            });
-        }
-
-        // Destruct field from req.body
-        const { status = currentAppointment.status, comments = currentAppointment.comments, shift = currentAppointment.shift, idDay = currentAppointment.idDay } = req.body;
-
         switch (role) {
-            // Admin all things
-            case 'Admin':
-                appointment = await Appointment.findByIdAndUpdate(appointmentId, req.body, { new: true });
-                break;
-            case 'Mechanic':
-                // Just status and comments
-                appointment = await Appointment.findOneAndUpdate(
-                    { _id: appointmentId, idMechanic: userId, status: "En progreso" },
-                    { status, comments },
-                    { new: true }
-                );
-                break;
             case "Client":
-                // Just status, shift and idDay
-                appointment = await Appointment.findOneAndUpdate(
-                    { _id: appointmentId, idClient: userId, status: "Asignado" },
-                    { status, idDay, shift },
-                    { new: true }
-                );
+                appointment = await Appointment.findOne({
+                    idMechanic : req.body.idMechanic,
+                    day :  req.body.day,
+                    shift : req.body.shift
+                });  
+
+                if (appointment) {
+                    return res.status(409).json({
+                        status: 'error',
+                        message: 'La cita ya se encuentra agendada'
+                    });
+                }
+
                 break;
-
+        
             default:
-                return res.status(403).json({
-                    status: 'error',
-                    message: "No autorizado para actualizar"
-                })
+                break;
         }
-
-        if (!appointment) {
-            return res.status(404).json({
-                status: 'error',
-                message: "Cita no encontrada",
-                error: error.message
-            })
-        };
-
+        
         res.status(200).json({
             status: 'success',
             message: 'Cita actualizada!',
@@ -355,7 +326,10 @@ export const updateAppointment = async (req, res) => {
         res.status(400).json({
             status: 'error',
             message: "No se pudo actualizar la cita",
-            error: error.message
+            error: {
+                name: error.name,
+                message: error.message
+            }
         });
     }
 };
