@@ -47,14 +47,14 @@ export const createAppointment = async (req, res) => {
 
             for (const appointmentData of appointmentsData) {
                 // Validate Json came from input (Postman)
-                if (appointmentData.idMechanic !== '' || appointmentData.idClient !== '' || !appointmentData.day || !appointmentData.shift || appointmentData.services.length === 0 || appointmentData.status !== '' || appointmentData.comments !== '') {
+                if (appointmentData.idMechanic !== null || appointmentData.idClient !== null || !appointmentData.day || !appointmentData.shift || appointmentData.services.length !== 0 || appointmentData.status !== null || appointmentData.comments !== null) {
                     return res.status(400).json({
                         status: 'error',
                         message: 'Error, por favor complete los campos para todos los usuarios'
                     });
                 }
 
-                let appointments = await insertMany(appointmentsData);
+                let appointments = await Appointment.insertMany(appointmentsData);
 
                 return res.status(200).json({
                     status: 'success',
@@ -64,14 +64,16 @@ export const createAppointment = async (req, res) => {
             }
         } else {
 
-            if (appointmentsData.idMechanic !== '' || appointmentsData.idClient !== '' || !appointmentsData.day || !appointmentsData.shift || appointmentsData.services.length === 0 || appointmentsData.status !== '' || appointmentsData.comments !== '') {
+            console.log(appointmentsData);
+
+            if (appointmentsData.idMechanic !== null || appointmentsData.idClient !== null || !appointmentsData.day || !appointmentsData.shift || appointmentsData.services.length !== 0 || appointmentsData.status !== null || appointmentsData.comments !== null) {
                 return res.status(400).json({
                     status: 'error',
                     message: 'Error, por favor complete los campos para todos los usuarios'
                 });
             }
 
-            let appointment = await new Appointment(data).save();
+            let appointment = await new Appointment(appointmentsData).save();
 
             return res.status(200).json({
                 status: 'success',
