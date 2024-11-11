@@ -143,16 +143,25 @@ export const listAppointments = async (req, res) => {
         if (authenticatedUser.role === 'Admin') {
 
             let page = req.params.page ? parseInt(req.params.page, 10) : 1;
-
             let appointmentsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 8;
 
             const options = {
                 page: page,
                 limit: appointmentsPerPage,
-                select: "-__v"
+                select: "-__v",
+                populate: [
+                    { path: 'idMechanic', select: 'name last_name' },
+                    { path: 'idClient', select: 'name last_name' }
+                ]
             };
 
-            let appointments = await Appointment.paginate({}, options);
+            let appointments = await Appointment.paginate(filter, options);
+
+            return res.status(200).json({
+                status: 'success',
+                message: 'Listado exitoso',
+                appointments
+            });
 
             // Validacion de que si existan usuarios
             if (!appointments || appointments.docs.length === 0) {
@@ -174,7 +183,7 @@ export const listAppointments = async (req, res) => {
             filter = { idMechanic: authenticatedUser.userId, status: { $in: [1, 2, 3, 4] } };
             let appointments = await Appointment.find(filter)
                 .populate({ path: 'idMechanic', select: "name last_name " })
-                .populate({ path: 'idClient', select: "name last_name " })
+                .populate({ path: 'idClient', select: "name last_name " });
             console.log(appointments);
             return res.status(200).json({
                 status: 'success',
@@ -184,7 +193,9 @@ export const listAppointments = async (req, res) => {
 
         } else {
             filter = { idClient: authenticatedUser.userId };
-            let appointments = await Appointment.find(filter);
+            let appointments = await Appointment.find(filter)
+                .populate({ path: 'idMechanic', select: "name last_name " })
+                .populate({ path: 'idClient', select: "name last_name " });
 
             if (!appointments) {
                 return res.status(404).send({
