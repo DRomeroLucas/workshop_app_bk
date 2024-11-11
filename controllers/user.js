@@ -498,7 +498,7 @@ export const listMechanics = async (req, res) => {
         const options = {
             page: page,
             limit: userPerPage,
-            select: "-password -_id -__v"
+            select: "-password -__v"
         };
 
         // Realizar busqueda usuarios en base de datos de manera paginada
