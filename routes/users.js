@@ -13,7 +13,7 @@ router.get('/profile/:id', ensureAuth, profile);
 router.put('/updateProfile', ensureAuth, updateProfile);
 router.get('/listUsers/:page?', ensureAuth, listUsers);
 router.get('/listClients/:page?', ensureAuth, listClients);
-router.get('/listMechanic/:page?', listMechanics);
+router.get('/listMechanic/:page?', ensureAuth, listMechanics);
 router.put('/updateUsers/:id', ensureAuth, updateUsers);
 router.patch('/delete', ensureAuth, softDelete);
 router.patch('/activeClients/:id', ensureAuth, activateClients);
