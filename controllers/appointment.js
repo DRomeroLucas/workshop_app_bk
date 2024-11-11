@@ -26,8 +26,8 @@ export const createAppointment = async (req, res) => {
             });
         }
 
-        // If the user authenticated is not admin, he can't create an appointment
-        if (authenticatedUser.role !== "Admin") {
+        // If the user authenticated is a mechanic, he can't create an appointment
+        if (authenticatedUser.role === "Mechanic") {
             return res.status(403).json({
                 status: 'error',
                 messsage: 'Usuario no autorizado'
