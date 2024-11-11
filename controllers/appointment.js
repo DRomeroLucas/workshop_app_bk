@@ -95,34 +95,6 @@ export const createAppointment = async (req, res) => {
     }
 }
 
-// Method for assigning an appoitment to a customer and mechanic
-export const assigningAppointment = async (req, res) => {
-    try {
-        // Obtain data from postman body
-        let data = req.body;
-
-        // Getting user authenticated
-        const authenticatedUser = req.user;
-
-        // Validate that user is authenticated
-        if (!authenticatedUser) {
-            return res.status(401).json({
-                status: 'error',
-                message: 'Usuario no autenticado'
-            });
-        }
-
-        // If role is mechanic it can't create and appointment
-        if (authenticatedUser.role === "Mechanic") {
-            return res.status(403).json({
-                status: 'error',
-                messsage: 'Rol no autorizado'
-            })
-        };
-    } catch (error) {
-
-    }
-}
 
 // List appointments
 export const listAppointments = async (req, res) => {
