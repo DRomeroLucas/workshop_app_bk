@@ -95,6 +95,48 @@ export const createAppointment = async (req, res) => {
     }
 }
 
+// View available appointments
+export const assigningAppointment = async (req, res) => {
+    try {
+        let availableAppointments;
+
+        //Authentication
+        const authenticatedUser = req.user;
+
+        // Validation
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
+        // Verificate the rol is Client or Admin
+        if (req.user.role !== "Mechanic") {
+            availableAppointments = await Appointment.find({});
+
+            if (availableAppointments.length === 0 ) {
+                return res.status(404).json({
+                    status: 'error',
+                    message: 'No hay citas disponibles'
+                });
+            }
+
+            return res.status(200).json(availableAppointments);
+        } else {
+            return res.status(403).json({
+                status: 'error',
+                message: "Acceso no permitido."
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Error al obtener las citas disponibles',
+            error: error.message
+        });
+    }
+};
 
 // List appointments
 export const listAppointments = async (req, res) => {
@@ -114,7 +156,7 @@ export const listAppointments = async (req, res) => {
 
         // Role verificaction
         if (req.user.role === 'Admin') {
-            appointments = await Appointment.find({ idClient: { $ne: null } });
+            appointments = await Appointment.find({});
         } else if (req.user.role === 'Mechanic') {
             appointments = await Appointment.find({ idMechanic: req.user.userId, status: "En progreso" });
         } else {

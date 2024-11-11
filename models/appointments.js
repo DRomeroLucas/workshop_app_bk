@@ -18,7 +18,7 @@ const appointmentSchema = new mongoose.Schema({
         require: true
     },
     shift: {
-        type: String,
+        type: Number,
         require: true
     },
     services: [{
@@ -26,7 +26,7 @@ const appointmentSchema = new mongoose.Schema({
         ref: "Service",
     }],
     status: {
-        type: String,
+        type: Number,
         default: null
     },
     comments: {
