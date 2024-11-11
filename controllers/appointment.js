@@ -280,7 +280,7 @@ export const updateAppointment = async (req, res) => {
 
         const authenticatedUser = req.user;
 
-        // Validation
+        // Verificar que el usuario esté autenticado
         if (!authenticatedUser) {
             return res.status(401).json({
                 status: 'error',
@@ -288,35 +288,89 @@ export const updateAppointment = async (req, res) => {
             });
         }
 
-        // User Id
+        // Obtener ID y rol del usuario
         const userId = authenticatedUser.userId;
-        // Role verificaction
         const { role } = authenticatedUser;
 
-        // Get appointmentId
+        // Obtener ID de la cita a actualizar
         const { appointmentId } = req.params;
 
-        switch (role) {
-            case "Client":
-                appointment = await Appointment.findOne({
-                    idMechanic : req.body.idMechanic,
-                    day :  req.body.day,
-                    shift : req.body.shift
-                });  
-
-                if (appointment) {
-                    return res.status(409).json({
-                        status: 'error',
-                        message: 'La cita ya se encuentra agendada'
-                    });
-                }
-
-                break;
-        
-            default:
-                break;
+        // Obtener la cita actual antes de actualizar
+        const currentAppointment = await Appointment.findById(appointmentId);
+        if (!currentAppointment) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Cita no encontrada'
+            });
         }
-        
+
+        // Verificar que el cliente esté intentando modificar solo sus citas
+        if (role === 'Client' && currentAppointment.idClient.toString() !== userId.toString()) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'No autorizado para modificar citas de otros usuarios'
+            });
+        }
+
+        // Desestructurar campos de req.body
+        const { status = currentAppointment.status, comments = currentAppointment.comments, shift = currentAppointment.shift, idDay = currentAppointment.idDay } = req.body;
+
+        // Validación para roles Admin y Client
+        if (role === 'Admin' || role === 'Client') {
+            const { idMechanic = currentAppointment.idMechanic } = req.body;
+
+            // Verificar si ya existe una cita con el mismo mecánico, día y turno
+            const conflictingAppointment = await Appointment.findOne({
+                idMechanic,
+                idDay,
+                shift,
+                _id: { $ne: appointmentId } // Excluir la cita actual de la búsqueda
+            });
+
+            if (conflictingAppointment) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'El mecánico ya tiene una cita asignada en el mismo día y turno'
+                });
+            }
+        }
+
+        // Lógica de actualización según el rol del usuario
+        switch (role) {
+            case 'Admin':
+                // Admin puede actualizar todos los campos
+                appointment = await Appointment.findByIdAndUpdate(appointmentId, req.body, { new: true });
+                break;
+            case 'Mechanic':
+                // Mechanic puede actualizar solo estado y comentarios
+                appointment = await Appointment.findOneAndUpdate(
+                    { _id: appointmentId, idMechanic: userId, status: "En progreso" },
+                    { status, comments },
+                    { new: true }
+                );
+                break;
+            case 'Client':
+                // Client puede actualizar estado, idDay y turno
+                appointment = await Appointment.findOneAndUpdate(
+                    { _id: appointmentId, idClient: userId, status: "Asignado" },
+                    { status, idDay, shift },
+                    { new: true }
+                );
+                break;
+            default:
+                return res.status(403).json({
+                    status: 'error',
+                    message: 'No autorizado para actualizar'
+                });
+        }
+
+        if (!appointment) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Cita no encontrada'
+            });
+        }
+
         res.status(200).json({
             status: 'success',
             message: 'Cita actualizada!',
@@ -325,11 +379,8 @@ export const updateAppointment = async (req, res) => {
     } catch (error) {
         res.status(400).json({
             status: 'error',
-            message: "No se pudo actualizar la cita",
-            error: {
-                name: error.name,
-                message: error.message
-            }
+            message: 'No se pudo actualizar la cita',
+            error: error.message
         });
     }
 };
