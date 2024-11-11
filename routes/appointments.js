@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { createAppointment, deleteAppointment, getAppointment, listAppointments, testAppointment, updateAppointment } from '../controllers/appointment.js';
+import { ensureAuth } from "../middlewares/auth.js";
 
 const router = Router();
 
 router.get('/test-appointment', testAppointment);
-router.post ('/create-appointment', createAppointment);
-router.get('/list-appointment', listAppointments);
-router.get('/get-appointment/:id', getAppointment);
-router.patch('/update-appointment/:id', updateAppointment);
-router.delete('/delete-appointment/:id', deleteAppointment);
+router.post ('/create-appointment',  ensureAuth, createAppointment);
+router.get('/list-appointment', ensureAuth, listAppointments);
+router.get('/get-appointment/:appointmentId', ensureAuth, getAppointment);
+router.patch('/update-appointment/:appointmentId', ensureAuth, updateAppointment);
+router.delete('/delete-appointment/:appointmentId', ensureAuth, deleteAppointment);
 
 export default router;

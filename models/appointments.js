@@ -6,33 +6,32 @@ const appointmentSchema = new mongoose.Schema({
     idMechanic: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Mechanic',
-        required: true,
+        default: null
     },
     idClient: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
+        default: null
     },
-    idService: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Service',
-        required: true,
-    },
-    date: {
-        type: Date,
-        required: true,
-    },
-    time: {
-        type: Date,
-        required: true,
-    },
-    price: {
+    day: {
         type: Number,
-        required: true,
+        require: true
     },
+    shift: {
+        type: String,
+        require: true
+    },
+    services: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Service",
+    }],
     status: {
         type: String,
-        default: 'Asignado'
+        default: null
+    },
+    comments: {
+        type: String,
+        default: null
     }
     }, {
         timestamps: true
