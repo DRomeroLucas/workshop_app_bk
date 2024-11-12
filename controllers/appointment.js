@@ -15,6 +15,9 @@ export const createAppointment = async (req, res) => {
         // Obtain data
         const appointmentsData = req.body;
 
+        // Send idClient
+        appointmentsData.idClient = req.user.userId;
+
         // User authentication
         const authenticatedUser = req.user;
 
@@ -26,61 +29,43 @@ export const createAppointment = async (req, res) => {
             });
         }
 
-        // If the user authenticated is not admin, he can't create an appointment
-        if (authenticatedUser.role !== "Admin") {
+        // If the user authenticated is mechanic , he can't create an appointment
+        if (authenticatedUser.role === "Mechanic") {
             return res.status(403).json({
                 status: 'error',
                 messsage: 'Usuario no autorizado'
             })
         };
-
-        // Validate if data from postam was an array of objects
-        if (Array.isArray(appointmentsData)) {
-
-            // Validate array isn't empty
-            if (appointmentsData.length === 0) {
-                return res.status(400).json({
-                    status: 'error',
-                    message: 'Error, se requiere un arreglo de citas'
-                });
-            }
-
-            for (const appointmentData of appointmentsData) {
-                // Validate Json came from input (Postman)
-                if (appointmentData.idMechanic !== null || appointmentData.idClient !== null || !appointmentData.day || !appointmentData.shift || appointmentData.services.length !== 0 || appointmentData.status !== null || appointmentData.comments !== null) {
-                    return res.status(400).json({
-                        status: 'error',
-                        message: 'Error, por favor complete los campos para todos los usuarios'
-                    });
-                }
-
-                let appointments = await Appointment.insertMany(appointmentsData);
-
-                return res.status(200).json({
-                    status: 'success',
-                    message: 'Citas creados exitosamente',
-                    appointments
-                });
-            }
-        } else {
-
-            console.log(appointmentsData);
-
-            if (appointmentsData.idMechanic !== null || appointmentsData.idClient !== null || !appointmentsData.day || !appointmentsData.shift || appointmentsData.services.length !== 0 || appointmentsData.status !== null || appointmentsData.comments !== null) {
-                return res.status(400).json({
-                    status: 'error',
-                    message: 'Error, por favor complete los campos para todos los usuarios'
-                });
-            }
-
-            let appointment = await new Appointment(appointmentsData).save();
-
-            return res.status(200).json({
-                status: 'success',
-                message: 'Citas creados exitosamente',
-                appointment
+        // Validate field from form to create appointmentsa
+        if (!appointmentsData.idMechanic || !appointmentsData.idClient || !appointmentsData.day || !appointmentsData.shift || appointmentsData.services.length === 0 || !appointmentsData.status) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Error, por favor complete los campos'
             });
         }
+
+        // Validate duplicated appointments
+        const duplicatedAppointment = await Appointment.findOne({
+            idMechanic: appointmentsData.idMechanic,
+            shift: appointmentsData.shift,
+            day: appointmentsData.day
+        });
+
+        if (duplicatedAppointment) {
+            return res.status(409).send({
+                status: "success",
+                message: "Esta cita ya se encuentra asignada"
+            });
+        }
+
+        // Creating new appointment
+        let appointment = await new Appointment(appointmentsData).save();
+
+        return res.status(200).json({
+            status: 'success',
+            message: 'Citas creados exitosamente',
+            appointment
+        });
 
     } catch (error) {
         console.error(error);
@@ -95,11 +80,52 @@ export const createAppointment = async (req, res) => {
     }
 }
 
+// View available appointments (Not used)
+// export const assigningAppointment = async (req, res) => {
+//     try {
+//         let availableAppointments;
+
+//         //Authentication
+//         const authenticatedUser = req.user;
+
+//         // Validation
+//         if (!authenticatedUser) {
+//             return res.status(401).json({
+//                 status: 'error',
+//                 message: 'Usuario no autenticado'
+//             });
+//         }
+
+//         // Verificate the rol is Client or Admin
+//         if (req.user.role !== "Mechanic") {
+//             availableAppointments = await Appointment.find({});
+
+//             if (availableAppointments.length === 0 ) {
+//                 return res.status(404).json({
+//                     status: 'error',
+//                     message: 'No hay citas disponibles'
+//                 });
+//             }
+
+//             return res.status(200).json(availableAppointments);
+//         } else {
+//             return res.status(403).json({
+//                 status: 'error',
+//                 message: "Acceso no permitido."
+//             });
+//         }
+//     } catch (error) {
+//         res.status(500).json({
+//             status: 'error',
+//             message: 'Error al obtener las citas disponibles',
+//             error: error.message
+//         });
+//     }
+// };
 
 // List appointments
 export const listAppointments = async (req, res) => {
     try {
-        let appointments;
 
         // User authentication
         const authenticatedUser = req.user;
@@ -112,21 +138,116 @@ export const listAppointments = async (req, res) => {
             });
         }
 
-        // Role verificaction
-        if (req.user.role === 'Admin') {
-            appointments = await Appointment.find({ idClient: { $ne: null } });
-        } else if (req.user.role === 'Mechanic') {
-            appointments = await Appointment.find({ idMechanic: req.user.userId, status: "En progreso" });
+        // Set filter based on user role
+        let filter = {};
+        if (authenticatedUser.role === 'Admin') {
+
+            let page = req.params.page ? parseInt(req.params.page, 10) : 1;
+            let appointmentsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 8;
+
+            const options = {
+                page: page,
+                limit: appointmentsPerPage,
+                select: "-__v",
+                populate: [
+                    { path: 'idMechanic', select: 'name last_name' },
+                    { path: 'idClient', select: 'name last_name' }
+                ]
+            };
+
+            let appointments = await Appointment.paginate(filter, options);
+
+            if (!appointments) {
+                return res.status(404).send({
+                    status: "error",
+                    message: "No existen citas disponibles"
+                });
+            }
+
+            return res.status(200).json({
+                status: 'success',
+                message: 'Listado exitoso',
+                appointments
+            });
+
+        } else if (authenticatedUser.role === 'Mechanic') {
+
+            let page = req.params.page ? parseInt(req.params.page, 10) : 1;
+            let appointmentsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 8;
+
+            const options = {
+                page: page,
+                limit: appointmentsPerPage,
+                select: "-__v",
+                populate: [
+                    { path: 'idMechanic', select: 'name last_name' },
+                    { path: 'idClient', select: 'name last_name' }
+                ]
+            };
+
+            const filter = {
+                idMechanic: authenticatedUser.userId,
+                status: { $in: [1, 2, 3, 4] }
+            };
+
+            let appointments = await Appointment.paginate(filter, options);
+
+            if (!appointments) {
+                return res.status(404).send({
+                    status: "error",
+                    message: "No existen citas disponibles"
+                });
+            }
+
+            return res.status(200).json({
+                status: 'success',
+                message: 'Listado exitoso',
+                appointments
+            });
+
         } else {
-            appointments = await Appointment.find({ idClient: req.user.userId });
+
+            let page = req.params.page ? parseInt(req.params.page, 10) : 1;
+            let appointmentsPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 8;
+
+            const options = {
+                page: page,
+                limit: appointmentsPerPage,
+                select: "-__v",
+                populate: [
+                    { path: 'idMechanic', select: 'name last_name' },
+                    { path: 'idClient', select: 'name last_name' }
+                ]
+            };
+
+            const filter = {
+                idClient: authenticatedUser.userId
+            };
+
+            let appointments = await Appointment.paginate(filter, options);
+
+            if (!appointments) {
+                return res.status(404).send({
+                    status: "error",
+                    message: "No existen citas disponibles"
+                });
+            }
+
+            return res.status(200).json({
+                status: 'success',
+                message: 'Listado exitoso',
+                appointments
+            });
         }
 
-        res.status(200).json(appointments);
     } catch (error) {
         res.status(500).json({
             status: "error",
             message: "Error al obtener las citas",
-            error
+            error: {
+                name: error.name,
+                message: error.message
+            }
         });
     }
 };
@@ -189,7 +310,7 @@ export const updateAppointment = async (req, res) => {
 
         const authenticatedUser = req.user;
 
-        // Validation
+        // Verificar que el usuario esté autenticado
         if (!authenticatedUser) {
             return res.status(401).json({
                 status: 'error',
@@ -197,62 +318,88 @@ export const updateAppointment = async (req, res) => {
             });
         }
 
-        // User Id
+        // Obtener ID y rol del usuario
         const userId = authenticatedUser.userId;
-        // Role verificaction
         const { role } = authenticatedUser;
 
-        // Get appointmentId
+        // Obtener ID de la cita a actualizar
         const { appointmentId } = req.params;
 
-        //  Get the curren Appointment before update
+        // Obtener la cita actual antes de actualizar
         const currentAppointment = await Appointment.findById(appointmentId);
         if (!currentAppointment) {
-            return req.status(404).json({
+            return res.status(404).json({
                 status: 'error',
                 message: 'Cita no encontrada'
             });
         }
 
-        // Destruct field from req.body
+        // Verificar que el cliente esté intentando modificar solo sus citas
+        if (role === 'Client' && currentAppointment.idClient.toString() !== userId.toString()) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'No autorizado para modificar citas de otros usuarios'
+            });
+        }
+
+        // Desestructurar campos de req.body
         const { status = currentAppointment.status, comments = currentAppointment.comments, shift = currentAppointment.shift, idDay = currentAppointment.idDay } = req.body;
 
+        // Validación para roles Admin y Client
+        if (role === 'Admin' || role === 'Client') {
+            const { idMechanic = currentAppointment.idMechanic } = req.body;
+
+            // Verificar si ya existe una cita con el mismo mecánico, día y turno
+            const conflictingAppointment = await Appointment.findOne({
+                idMechanic,
+                idDay,
+                shift,
+                _id: { $ne: appointmentId } // Excluir la cita actual de la búsqueda
+            });
+
+            if (conflictingAppointment) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'El mecánico ya tiene una cita asignada en el mismo día y turno'
+                });
+            }
+        }
+
+        // Lógica de actualización según el rol del usuario
         switch (role) {
-            // Admin all things
             case 'Admin':
+                // Admin puede actualizar todos los campos
                 appointment = await Appointment.findByIdAndUpdate(appointmentId, req.body, { new: true });
                 break;
             case 'Mechanic':
-                // Just status and comments
+                // Mechanic puede actualizar solo estado y comentarios
                 appointment = await Appointment.findOneAndUpdate(
                     { _id: appointmentId, idMechanic: userId, status: "En progreso" },
                     { status, comments },
                     { new: true }
                 );
                 break;
-            case "Client":
-                // Just status, shift and idDay
+            case 'Client':
+                // Client puede actualizar estado, idDay y turno
                 appointment = await Appointment.findOneAndUpdate(
                     { _id: appointmentId, idClient: userId, status: "Asignado" },
                     { status, idDay, shift },
                     { new: true }
                 );
                 break;
-
             default:
                 return res.status(403).json({
                     status: 'error',
-                    message: "No autorizado para actualizar"
-                })
+                    message: 'No autorizado para actualizar'
+                });
         }
 
         if (!appointment) {
             return res.status(404).json({
                 status: 'error',
-                message: "Cita no encontrada",
-                error: error.message
-            })
-        };
+                message: 'Cita no encontrada'
+            });
+        }
 
         res.status(200).json({
             status: 'success',
@@ -262,7 +409,7 @@ export const updateAppointment = async (req, res) => {
     } catch (error) {
         res.status(400).json({
             status: 'error',
-            message: "No se pudo actualizar la cita",
+            message: 'No se pudo actualizar la cita',
             error: error.message
         });
     }

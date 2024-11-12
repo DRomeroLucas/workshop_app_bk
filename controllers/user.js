@@ -466,6 +466,76 @@ export const listClients = async (req, res) => {
     }
 };
 
+// Método para listar mecánicos
+export const listMechanics = async (req, res) => {
+    try {
+        const authenticatedUser = req.user
+        // Validar que si halla usuario autenticado
+        if (!authenticatedUser) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Usuario no autenticado'
+            });
+        }
+
+        console.log(authenticatedUser.role);
+
+        // Validar que sea admin el usuario autenticado
+        if (authenticatedUser.role === 'Mechanic') {
+            return res.status(403).json({
+                status: 'error',
+                message: 'Usuario no autorizado'
+            });
+        }
+
+        // Enviar por url numer de paginacion
+        let page = req.params.page ? parseInt(req.params.page, 10) : 1;
+
+        //  Limite de paginacion por default
+        let userPerPage = req.query.limit ? parseInt(req.query.limit, 10) : 8;
+
+        // Parametros de la consulta a retornar
+        const options = {
+            page: page,
+            limit: userPerPage,
+            select: "-password -__v"
+        };
+
+        // Realizar busqueda usuarios en base de datos de manera paginada
+        const users = await User.paginate({ role: "Mechanic" }, options);
+
+        // Validacion de que si existan usuarios
+        if (!users || users.docs.length === 0) {
+            return res.status(404).send({
+                status: "error",
+                message: "No existen usuarios disponibles"
+            });
+        }
+
+        res.status(200).json({
+            status: "success",
+            users: users.docs,
+            // ? totalDocs -> atributo de metodo paginate de Mongoose sirve para retornar el numero de documentos
+            totalDocs: users.totalDocs,
+            // ? totalPages -> atributo de metodo paginate de Mongoose sirve para retornar el numero de paginas
+            totalPage: users.totalPages,
+            currentPage: users.page,
+        });
+
+    } catch (error) {
+        console.log(`Error al listar el perfil de los mecanicos: ${error}`);
+        // Devolver mensaje de error
+        return res.status(500).send({
+            status: "error",
+            message: "Error al listar los mecanicos",
+            error: {
+                name: error.name,
+                message: error.message
+            }
+        });
+    }
+}
+
 // Metodo para actualizar usuarios
 export const updateUsers = async (req, res) => {
     try {

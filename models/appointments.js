@@ -5,29 +5,31 @@ import mongoosePaginate from "mongoose-paginate-v2";
 const appointmentSchema = new mongoose.Schema({
     idMechanic: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Mechanic',
-        default: null
+        ref: 'User',
+        required : true
     },
     idClient: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        default: null
+        required : true
     },
     day: {
         type: Number,
         require: true
     },
     shift: {
-        type: String,
+        type: Number,
         require: true
     },
     services: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Service",
+        required: true
     }],
     status: {
-        type: String,
-        default: null
+        type: Number,
+        default: 1,
+        required: true
     },
     comments: {
         type: String,
