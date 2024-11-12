@@ -157,7 +157,7 @@ export const listAppointments = async (req, res) => {
 
             let appointments = await Appointment.paginate(filter, options);
 
-            if (!appointments) {
+            if (!appointments || appointments.docs.length === 0) {
                 return res.status(404).send({
                     status: "error",
                     message: "No existen citas disponibles"
@@ -192,7 +192,7 @@ export const listAppointments = async (req, res) => {
 
             let appointments = await Appointment.paginate(filter, options);
 
-            if (!appointments) {
+            if (!appointments || appointments.docs.length === 0) {
                 return res.status(404).send({
                     status: "error",
                     message: "No existen citas disponibles"
@@ -226,7 +226,7 @@ export const listAppointments = async (req, res) => {
 
             let appointments = await Appointment.paginate(filter, options);
 
-            if (!appointments) {
+            if (!appointments || appointments.docs.length === 0) {
                 return res.status(404).send({
                     status: "error",
                     message: "No existen citas disponibles"
