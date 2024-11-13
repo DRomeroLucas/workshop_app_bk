@@ -845,6 +845,7 @@ export const login = async (req, res) => {
                 name: user.name,
                 last_name: user.last_name,
                 email: user.email,
+                document: user.document
             }
         });
 
@@ -1015,6 +1016,8 @@ export const updateProfile = async (req, res) => {
         // Buscar y actualizar el usuario
         let userUpdated = await User.findByIdAndUpdate(user._id, dataToUpdate, { new: true });
 
+         const {id, name, last_name, email, document, role } = userUpdated;
+
         if (!userUpdated) {
             return res.status(400).send({
                 status: "error",
@@ -1026,7 +1029,14 @@ export const updateProfile = async (req, res) => {
         return res.status(200).json({
             status: "success",
             message: "Usuario actualizado correctamente",
-            user: userUpdated
+            user: {
+                id,
+                name,
+                last_name,
+                email,
+                document,
+                role
+            }
         });
     } catch (error) {
         console.error(`Error en el proceso de actualizar usuario:, ${error}`);
